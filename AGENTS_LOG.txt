@@ -23,3 +23,4 @@
 - Added PNG to 4bpp tile conversion with caching in the PC asset loader and updated `LoadMiscBlankGfx` to use runtime-loaded tiles.
 - Extracted palettes from PNGs in the asset loader and switched text window frames and palettes to load at runtime, removing INCBIN dependencies for the PC build.
 - Replaced message box graphics and palette with PNG-based runtime loading, removed corresponding INCBIN data, and extended PC GBA shims with tile and palette size macros so text windows compile on desktop.
+- Switched rotating pocket indicator to load PNG graphics and palette at runtime, removed INCBIN assets from item menu icons, and expanded PC GBA shims with basic BG VRAM macros for desktop compilation.
