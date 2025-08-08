@@ -2,8 +2,10 @@
 #define GUARD_GRAPHICS_H
 
 // overworld
+#ifndef PLATFORM_PC
 extern const u8 gMessageBox_Gfx[];
 extern const u16 gMessageBox_Pal[];
+#endif
 
 // pokeballs
 extern const u32 gBallGfx_Poke[];
