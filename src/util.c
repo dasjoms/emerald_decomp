@@ -5,6 +5,7 @@
 #include "constants/rgb.h"
 #ifdef PLATFORM_PC
 #include "../platform/pc/assets.h"
+#include <stdlib.h>
 #endif
 
 const u32 gBitTable[] =
@@ -119,15 +120,28 @@ static const u16 sCrc16Table[] =
 
 #ifdef PLATFORM_PC
 static const u8 *sMiscBlankGfx;
+static const u16 *sMiscBlankPal;
 
 const u8 *LoadMiscBlankGfx(void)
 {
     if (!sMiscBlankGfx)
-        sMiscBlankGfx = AssetsLoadFile("graphics/interface/blank.4bpp", NULL);
+    {
+        SDL_Surface *surf = AssetsLoadPNG("graphics/interface/blank.png");
+        if (surf)
+            sMiscBlankGfx = calloc(1, 0x20); // 8x8 tile of zeros
+    }
     return sMiscBlankGfx;
+}
+
+const u16 *LoadMiscBlankPal(void)
+{
+    if (!sMiscBlankPal)
+        sMiscBlankPal = AssetsLoadPal("graphics/interface/blank.pal", NULL);
+    return sMiscBlankPal;
 }
 #else
 const u8 gMiscBlank_Gfx[] = INCBIN_U8("graphics/interface/blank.4bpp");
+const u16 gMiscBlank_Pal[] = INCBIN_U16("graphics/interface/blank.gbapal");
 #endif
 
 u8 CreateInvisibleSpriteWithCallback(void (*callback)(struct Sprite *))
