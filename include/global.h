@@ -1,14 +1,14 @@
 #ifndef GUARD_GLOBAL_H
 #define GUARD_GLOBAL_H
 
-#include <string.h>
-#include <limits.h>
 #include "config.h" // we need to define config before gba headers as print stuff needs the functions nulled before defines.
 #ifdef PLATFORM_PC
 #include "../platform/pc/gba/gba.h"
 #else
 #include "gba/gba.h"
 #endif
+#include <string.h>
+#include <limits.h>
 #include "constants/global.h"
 #include "constants/flags.h"
 #include "constants/vars.h"
