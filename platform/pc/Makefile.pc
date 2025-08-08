@@ -4,7 +4,8 @@
 CC := cc
 CFLAGS ?= -O2
 SDL_CFLAGS := $(shell sdl2-config --cflags)
-CFLAGS += -DPLATFORM_PC -Iinclude $(SDL_CFLAGS)
+# Use -iquote so our headers don't override system ones like <malloc.h>
+CFLAGS += -DPLATFORM_PC -iquote include $(SDL_CFLAGS)
 
 PC_SRCS := src/main.c \
            platform/pc/platform.c \
