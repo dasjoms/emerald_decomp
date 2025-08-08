@@ -10,3 +10,4 @@
 - Introduced lightweight PC implementations of DMA/CPU helper macros and forward declarations so desktop compilers no longer warn about missing prototypes or pointer truncation when building core sources.
 - Added C replacements for BIOS syscalls in `platform/pc/syscalls.c`, covering interrupt waits, memory operations, and LZ77 decompression; wired into the PC build to remove dependence on assembly stubs.
 - Implemented SDL-backed input polling and 60 FPS timer, integrated SDL initialization/shutdown in the platform layer, added SDL2 build flags and DPAD constants, and adjusted strings header to coexist with system includes.
+- Added an SDL-based video subsystem that opens a 240×160 window, manages an ARGB framebuffer, applies backdrop colors, and blits frames each iteration.
