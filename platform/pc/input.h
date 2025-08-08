@@ -6,5 +6,6 @@
 
 void InputPoll(void);
 u16 InputGetKeys(void);
+bool InputShouldQuit(void);
 
 #endif // PLATFORM_PC_INPUT_H
