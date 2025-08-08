@@ -189,7 +189,6 @@ static void Task_LinkContestWaitForConnection(u8 taskId);
 
 static const u16 sResultsTextWindow_Pal[] = INCBIN_U16("graphics/contest/results_screen/text_window.gbapal");
 static const u8 sResultsTextWindow_Gfx[] = INCBIN_U8("graphics/contest/results_screen/text_window.4bpp");
-static const u16 sMiscBlank_Pal[] = INCBIN_U16("graphics/interface/blank.gbapal");
 
 static const struct OamData sOamData_ResultsTextWindow =
 {
@@ -219,6 +218,25 @@ static const struct SpriteTemplate sSpriteTemplate_ResultsTextWindow =
     .callback = SpriteCallbackDummy
 };
 
+#ifdef PLATFORM_PC
+static struct SpriteSheet sSpriteSheets_ResultsTextWindow[] =
+{
+    { .data = NULL, .size = 0x400, .tag = TAG_RESULTS_TEXT_WINDOW_LEFT },
+    { .data = NULL, .size = 0x400, .tag = TAG_RESULTS_TEXT_WINDOW_MIDLEFT },
+    { .data = NULL, .size = 0x400, .tag = TAG_RESULTS_TEXT_WINDOW_MIDRIGHT },
+    { .data = NULL, .size = 0x400, .tag = TAG_RESULTS_TEXT_WINDOW_RIGHT },
+    { .data = NULL, .size = 0x400, .tag = TAG_LINK_TEXT_WINDOW_LEFT },
+    { .data = NULL, .size = 0x400, .tag = TAG_LINK_TEXT_WINDOW_MIDLEFT },
+    { .data = NULL, .size = 0x400, .tag = TAG_LINK_TEXT_WINDOW_MIDRIGHT },
+    { .data = NULL, .size = 0x400, .tag = TAG_LINK_TEXT_WINDOW_RIGHT },
+};
+
+static struct SpritePalette sSpritePalette_ResultsTextWindow =
+{
+    .data = NULL,
+    .tag = TAG_TEXT_WINDOW_BASE,
+};
+#else
 static const struct SpriteSheet sSpriteSheets_ResultsTextWindow[] =
 {
     { .data = gMiscBlank_Gfx, .size = 0x400, .tag = TAG_RESULTS_TEXT_WINDOW_LEFT },
@@ -233,9 +251,10 @@ static const struct SpriteSheet sSpriteSheets_ResultsTextWindow[] =
 
 static const struct SpritePalette sSpritePalette_ResultsTextWindow =
 {
-     .data = sMiscBlank_Pal,
+     .data = gMiscBlank_Pal,
      .tag = TAG_TEXT_WINDOW_BASE,
 };
+#endif
 
 static const struct OamData sOamData_Confetti =
 {
@@ -1237,8 +1256,16 @@ static void CreateResultsTextWindowSprites(void)
 
     template = sSpriteTemplate_ResultsTextWindow;
     for (i = 0; i < (int)ARRAY_COUNT(sSpriteSheets_ResultsTextWindow); i++)
+    {
+#ifdef PLATFORM_PC
+        sSpriteSheets_ResultsTextWindow[i].data = gMiscBlank_Gfx;
+#endif
         LoadSpriteSheet(&sSpriteSheets_ResultsTextWindow[i]);
+    }
 
+#ifdef PLATFORM_PC
+    sSpritePalette_ResultsTextWindow.data = gMiscBlank_Pal;
+#endif
     LoadSpritePalette(&sSpritePalette_ResultsTextWindow);
 
     // Create sprites for the two window types, each made up of 4 sprites

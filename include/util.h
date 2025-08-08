@@ -6,8 +6,11 @@
 #ifdef PLATFORM_PC
 const u8 *LoadMiscBlankGfx(void);
 #define gMiscBlank_Gfx (LoadMiscBlankGfx())
+const u16 *LoadMiscBlankPal(void);
+#define gMiscBlank_Pal (LoadMiscBlankPal())
 #else
 extern const u8 gMiscBlank_Gfx[]; // unused in Emerald
+extern const u16 gMiscBlank_Pal[];
 #endif
 extern const u32 gBitTable[];
 
