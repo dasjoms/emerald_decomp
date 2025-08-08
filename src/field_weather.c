@@ -16,6 +16,9 @@
 #include "task.h"
 #include "trig.h"
 #include "gpu_regs.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 #define DROUGHT_COLOR_INDEX(color) ((((color) >> 1) & 0xF) | (((color) >> 2) & 0xF0) | (((color) >> 3) & 0xF00))
 
@@ -149,7 +152,22 @@ static const u8 ALIGNED(2) sBasePaletteColorMapTypes[32] =
     COLOR_MAP_DARK_CONTRAST,
 };
 
+#ifdef PLATFORM_PC
+static const u16 *LoadFogPalette(void)
+{
+    static const u16 *pal;
+    if (!pal)
+        pal = AssetsLoadPal("graphics/weather/fog.pal", NULL);
+    return pal;
+}
+
+const u16 *GetFogPalette(void)
+{
+    return LoadFogPalette();
+}
+#else
 const u16 ALIGNED(4) gFogPalette[] = INCBIN_U16("graphics/weather/fog.gbapal");
+#endif
 
 void StartWeather(void)
 {

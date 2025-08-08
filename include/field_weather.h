@@ -139,10 +139,16 @@ struct Weather
 // field_weather.c
 extern struct Weather gWeather;
 extern struct Weather *const gWeatherPtr;
+#ifdef PLATFORM_PC
+const u16 *GetFogPalette(void);
+#define gFogPalette GetFogPalette()
+const u8 *GetWeatherFogHorizontalTiles(void);
+#define gWeatherFogHorizontalTiles GetWeatherFogHorizontalTiles()
+#else
 extern const u16 gFogPalette[];
-
 // field_weather_effect.c
 extern const u8 gWeatherFogHorizontalTiles[];
+#endif
 
 void StartWeather(void);
 void SetNextWeather(u8 weather);

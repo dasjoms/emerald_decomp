@@ -53,14 +53,106 @@ static const u8 *LoadWeatherCloudTiles(size_t *size)
 #define gSandstormWeatherPalette (LoadSandstormWeatherPalette())
 #define gWeatherCloudTiles (LoadWeatherCloudTiles(NULL))
 
-const u8 gWeatherFogDiagonalTiles[] = {0};
-const u8 gWeatherFogHorizontalTiles[] = {0};
-const u8 gWeatherSnow1Tiles[] = {0};
-const u8 gWeatherSnow2Tiles[] = {0};
-const u8 gWeatherBubbleTiles[] = {0};
-const u8 gWeatherAshTiles[] = {0};
-const u8 gWeatherRainTiles[] = {0};
-const u8 gWeatherSandstormTiles[] = {0};
+static const u8 *LoadWeatherFogDiagonalTiles(size_t *size)
+{
+    static const u8 *tiles;
+    static size_t tilesSize;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/weather/fog_diagonal.png", NULL, &tilesSize);
+    if (size)
+        *size = tilesSize;
+    return tiles;
+}
+
+static const u8 *LoadWeatherFogHorizontalTiles(size_t *size)
+{
+    static const u8 *tiles;
+    static size_t tilesSize;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/weather/fog_horizontal.png", NULL, &tilesSize);
+    if (size)
+        *size = tilesSize;
+    return tiles;
+}
+
+static const u8 *LoadWeatherSnow1Tiles(size_t *size)
+{
+    static const u8 *tiles;
+    static size_t tilesSize;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/weather/snow0.png", NULL, &tilesSize);
+    if (size)
+        *size = tilesSize;
+    return tiles;
+}
+
+static const u8 *LoadWeatherSnow2Tiles(size_t *size)
+{
+    static const u8 *tiles;
+    static size_t tilesSize;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/weather/snow1.png", NULL, &tilesSize);
+    if (size)
+        *size = tilesSize;
+    return tiles;
+}
+
+static const u8 *LoadWeatherBubbleTiles(size_t *size)
+{
+    static const u8 *tiles;
+    static size_t tilesSize;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/weather/bubble.png", NULL, &tilesSize);
+    if (size)
+        *size = tilesSize;
+    return tiles;
+}
+
+static const u8 *LoadWeatherAshTiles(size_t *size)
+{
+    static const u8 *tiles;
+    static size_t tilesSize;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/weather/ash.png", NULL, &tilesSize);
+    if (size)
+        *size = tilesSize;
+    return tiles;
+}
+
+static const u8 *LoadWeatherRainTiles(size_t *size)
+{
+    static const u8 *tiles;
+    static size_t tilesSize;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/weather/rain.png", NULL, &tilesSize);
+    if (size)
+        *size = tilesSize;
+    return tiles;
+}
+
+static const u8 *LoadWeatherSandstormTiles(size_t *size)
+{
+    static const u8 *tiles;
+    static size_t tilesSize;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/weather/sandstorm.png", NULL, &tilesSize);
+    if (size)
+        *size = tilesSize;
+    return tiles;
+}
+
+#define gWeatherFogDiagonalTiles (LoadWeatherFogDiagonalTiles(NULL))
+#define gWeatherSnow1Tiles (LoadWeatherSnow1Tiles(NULL))
+#define gWeatherSnow2Tiles (LoadWeatherSnow2Tiles(NULL))
+#define gWeatherBubbleTiles (LoadWeatherBubbleTiles(NULL))
+#define gWeatherAshTiles (LoadWeatherAshTiles(NULL))
+#define gWeatherRainTiles (LoadWeatherRainTiles(NULL))
+#define gWeatherSandstormTiles (LoadWeatherSandstormTiles(NULL))
+
+const u8 *GetWeatherFogHorizontalTiles(void)
+{
+    return LoadWeatherFogHorizontalTiles(NULL);
+}
 #else
 const u16 gCloudsWeatherPalette[] = INCBIN_U16("graphics/weather/cloud.gbapal");
 const u16 gSandstormWeatherPalette[] = INCBIN_U16("graphics/weather/sandstorm.gbapal");
@@ -514,12 +606,16 @@ static const u16 sRainSpriteFallingDurations[][2] =
     {12, 10},
 };
 
+#ifdef PLATFORM_PC
+static struct SpriteSheet sRainSpriteSheet;
+#else
 static const struct SpriteSheet sRainSpriteSheet =
 {
     .data = gWeatherRainTiles,
     .size = sizeof(gWeatherRainTiles),
     .tag = GFXTAG_RAIN,
 };
+#endif
 
 void Rain_InitVars(void)
 {
@@ -712,6 +808,9 @@ static void InitRainSpriteMovement(struct Sprite *sprite, u16 val)
 
 static void LoadRainSpriteSheet(void)
 {
+#ifdef PLATFORM_PC
+    sRainSpriteSheet.data = LoadWeatherRainTiles(&sRainSpriteSheet.size);
+#endif
     LoadSpriteSheet(&sRainSpriteSheet);
 }
 
@@ -825,6 +924,10 @@ void Snow_InitVars(void)
     gWeatherPtr->colorMapStepDelay = 20;
     gWeatherPtr->targetSnowflakeSpriteCount = NUM_SNOWFLAKE_SPRITES;
     gWeatherPtr->snowflakeVisibleCounter = 0;
+#ifdef PLATFORM_PC
+    sSnowflakeSpriteImages[0].data = LoadWeatherSnow1Tiles(&sSnowflakeSpriteImages[0].size);
+    sSnowflakeSpriteImages[1].data = LoadWeatherSnow2Tiles(&sSnowflakeSpriteImages[1].size);
+#endif
 }
 
 void Snow_InitAll(void)
@@ -904,11 +1007,15 @@ static const struct OamData sSnowflakeSpriteOamData =
     .affineParam = 0,
 };
 
+#ifdef PLATFORM_PC
+static struct SpriteFrameImage sSnowflakeSpriteImages[2];
+#else
 static const struct SpriteFrameImage sSnowflakeSpriteImages[] =
 {
     {gWeatherSnow1Tiles, sizeof(gWeatherSnow1Tiles)},
     {gWeatherSnow2Tiles, sizeof(gWeatherSnow2Tiles)},
 };
+#endif
 
 static const union AnimCmd sSnowflakeAnimCmd0[] =
 {
@@ -1520,11 +1627,14 @@ static void CreateFogHorizontalSprites(void)
 
     if (!gWeatherPtr->fogHSpritesCreated)
     {
-        struct SpriteSheet fogHorizontalSpriteSheet = {
-            .data = gWeatherFogHorizontalTiles,
-            .size = sizeof(gWeatherFogHorizontalTiles),
-            .tag = GFXTAG_FOG_H,
-        };
+        struct SpriteSheet fogHorizontalSpriteSheet;
+#ifdef PLATFORM_PC
+        fogHorizontalSpriteSheet.data = LoadWeatherFogHorizontalTiles(&fogHorizontalSpriteSheet.size);
+#else
+        fogHorizontalSpriteSheet.data = gWeatherFogHorizontalTiles;
+        fogHorizontalSpriteSheet.size = sizeof(gWeatherFogHorizontalTiles);
+#endif
+        fogHorizontalSpriteSheet.tag = GFXTAG_FOG_H;
         LoadSpriteSheet(&fogHorizontalSpriteSheet);
         for (i = 0; i < NUM_FOG_HORIZONTAL_SPRITES; i++)
         {
@@ -1653,15 +1763,22 @@ bool8 Ash_Finish(void)
     return TRUE;
 }
 
+#ifdef PLATFORM_PC
+static struct SpriteSheet sAshSpriteSheet;
+#else
 static const struct SpriteSheet sAshSpriteSheet =
 {
     .data = gWeatherAshTiles,
     .size = sizeof(gWeatherAshTiles),
     .tag = GFXTAG_ASH,
 };
+#endif
 
 static void LoadAshSpriteSheet(void)
 {
+#ifdef PLATFORM_PC
+    sAshSpriteSheet.data = LoadWeatherAshTiles(&sAshSpriteSheet.size);
+#endif
     LoadSpriteSheet(&sAshSpriteSheet);
 }
 
@@ -1876,12 +1993,14 @@ static void UpdateFogDiagonalMovement(void)
     gWeatherPtr->fogDPosY = gSpriteCoordOffsetY + gWeatherPtr->fogDYOffset;
 }
 
+#ifndef PLATFORM_PC
 static const struct SpriteSheet sFogDiagonalSpriteSheet =
 {
     .data = gWeatherFogDiagonalTiles,
     .size = sizeof(gWeatherFogDiagonalTiles),
     .tag = GFXTAG_FOG_D,
 };
+#endif
 
 static const struct OamData sFogDiagonalSpriteOamData =
 {
@@ -1931,7 +2050,12 @@ static void CreateFogDiagonalSprites(void)
 
     if (!gWeatherPtr->fogDSpritesCreated)
     {
+#ifdef PLATFORM_PC
+        fogDiagonalSpriteSheet.data = LoadWeatherFogDiagonalTiles(&fogDiagonalSpriteSheet.size);
+        fogDiagonalSpriteSheet.tag = GFXTAG_FOG_D;
+#else
         fogDiagonalSpriteSheet = sFogDiagonalSpriteSheet;
+#endif
         LoadSpriteSheet(&fogDiagonalSpriteSheet);
         for (i = 0; i < NUM_FOG_DIAGONAL_SPRITES; i++)
         {
@@ -2166,12 +2290,16 @@ static const struct SpriteTemplate sSandstormSpriteTemplate =
     .callback = UpdateSandstormSprite,
 };
 
+#ifdef PLATFORM_PC
+static struct SpriteSheet sSandstormSpriteSheet;
+#else
 static const struct SpriteSheet sSandstormSpriteSheet =
 {
     .data = gWeatherSandstormTiles,
     .size = sizeof(gWeatherSandstormTiles),
     .tag = GFXTAG_SANDSTORM,
 };
+#endif
 
 // Regular sandstorm sprites
 #define tSpriteColumn  data[0]
@@ -2190,6 +2318,9 @@ static void CreateSandstormSprites(void)
 
     if (!gWeatherPtr->sandstormSpritesCreated)
     {
+#ifdef PLATFORM_PC
+        sSandstormSpriteSheet.data = LoadWeatherSandstormTiles(&sSandstormSpriteSheet.size);
+#endif
         LoadSpriteSheet(&sSandstormSpriteSheet);
         LoadCustomWeatherSpritePalette(gSandstormWeatherPalette);
         for (i = 0; i < NUM_SANDSTORM_SPRITES; i++)
@@ -2328,12 +2459,16 @@ static void UpdateBubbleSprite(struct Sprite *);
 
 static const u8 sBubbleStartDelays[] = {40, 90, 60, 90, 2, 60, 40, 30};
 
+#ifdef PLATFORM_PC
+static struct SpriteSheet sWeatherBubbleSpriteSheet;
+#else
 static const struct SpriteSheet sWeatherBubbleSpriteSheet =
 {
     .data = gWeatherBubbleTiles,
     .size = sizeof(gWeatherBubbleTiles),
     .tag = GFXTAG_BUBBLE,
 };
+#endif
 
 static const s16 sBubbleStartCoords[][2] =
 {
@@ -2357,6 +2492,9 @@ void Bubbles_InitVars(void)
     FogHorizontal_InitVars();
     if (!gWeatherPtr->bubblesSpritesCreated)
     {
+#ifdef PLATFORM_PC
+        sWeatherBubbleSpriteSheet.data = LoadWeatherBubbleTiles(&sWeatherBubbleSpriteSheet.size);
+#endif
         LoadSpriteSheet(&sWeatherBubbleSpriteSheet);
         gWeatherPtr->bubblesDelayIndex = 0;
         gWeatherPtr->bubblesDelayCounter = sBubbleStartDelays[0];
