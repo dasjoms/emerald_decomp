@@ -19,4 +19,8 @@ and:
 
 'make PLATFORM=pc'
 
+and:
+
+`cc $(find build/pc -name '*.o') $(sdl2-config --libs) -lSDL2_image -lSDL2_mixer -o /tmp/pokeemerald.exe`
+
 If any of them fail, investigate the issue and implement a full fix without compromising any of the original game's features. Rerun tests afterwards to verify your fix worked. If it didn't, reinvestigate why and implement the proper solution.
