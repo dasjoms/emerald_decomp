@@ -74,7 +74,7 @@ void m4aSoundInit(void)
 {
     s32 i;
 
-    CpuCopy32((void *)((s32)SoundMainRAM & ~1), SoundMainRAM_Buffer, sizeof(SoundMainRAM_Buffer));
+    CpuCopy32((void *)((uintptr_t)SoundMainRAM & ~1), SoundMainRAM_Buffer, sizeof(SoundMainRAM_Buffer));
 
     SoundInit(&gSoundInfo);
     MPlayExtender(gCgbChans);
@@ -506,35 +506,23 @@ void SoundClear(void)
 {
     struct SoundInfo *soundInfo = SOUND_INFO_PTR;
     s32 i;
-    void *chan;
 
     if (soundInfo->ident != ID_NUMBER)
         return;
 
     soundInfo->ident++;
 
-    i = MAX_DIRECTSOUND_CHANNELS;
-    chan = &soundInfo->chans[0];
+    for (i = 0; i < MAX_DIRECTSOUND_CHANNELS; i++)
+        soundInfo->chans[i].statusFlags = 0;
 
-    while (i > 0)
+    if (soundInfo->cgbChans)
     {
-        ((struct SoundChannel *)chan)->statusFlags = 0;
-        i--;
-        chan = (void *)((s32)chan + sizeof(struct SoundChannel));
-    }
+        struct CgbChannel *chan = soundInfo->cgbChans;
 
-    chan = soundInfo->cgbChans;
-
-    if (chan)
-    {
-        i = 1;
-
-        while (i <= 4)
+        for (i = 1; i <= 4; i++, chan++)
         {
             soundInfo->CgbOscOff(i);
-            ((struct CgbChannel *)chan)->statusFlags = 0;
-            i++;
-            chan = (void *)((s32)chan + sizeof(struct CgbChannel));
+            chan->statusFlags = 0;
         }
     }
 
@@ -1558,21 +1546,17 @@ void ply_xxx(struct MusicPlayerInfo *mplayInfo, struct MusicPlayerTrack *track)
     gMPlayJumpTable[0](mplayInfo, track);
 }
 
-#define READ_XCMD_BYTE(var, n)       \
-{                                    \
-    u32 byte = track->cmdPtr[(n)]; \
-    byte <<= n * 8;                  \
-    (var) &= ~(0xFF << (n * 8));     \
-    (var) |= byte;                   \
+#define READ_XCMD_BYTE(var, n)            \
+{                                        \
+    uintptr_t byte = track->cmdPtr[(n)]; \
+    byte <<= (n) * 8;                    \
+    (var) &= ~((uintptr_t)0xFF << ((n) * 8)); \
+    (var) |= byte;                       \
 }
 
 void ply_xwave(struct MusicPlayerInfo *mplayInfo, struct MusicPlayerTrack *track)
 {
-    u32 wav;
-
-#ifdef UBFIX
-    wav = 0;
-#endif
+    uintptr_t wav = 0;
 
     READ_XCMD_BYTE(wav, 0) // UB: uninitialized variable
     READ_XCMD_BYTE(wav, 1)
@@ -1714,7 +1698,7 @@ start_song:
     gPokemonCrySongs[i].tone = tone;
     gPokemonCrySongs[i].part[0] = &gPokemonCrySongs[i].part0;
     gPokemonCrySongs[i].part[1] = &gPokemonCrySongs[i].part1;
-    gPokemonCrySongs[i].gotoTarget = (u32)&gPokemonCrySongs[i].cont;
+    gPokemonCrySongs[i].gotoTarget = (uintptr_t)&gPokemonCrySongs[i].cont;
 
     mplayInfo->ident = ID_NUMBER;
 
