@@ -6,6 +6,70 @@
 #include "bg.h"
 #include "graphics.h"
 
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#include <stdio.h>
+
+static struct TilesPal sWindowFrames[WINDOW_FRAMES_COUNT];
+static const u16 *sTextWindowPalettes[5];
+
+static void LoadWindowFrame(u8 id)
+{
+    if (id >= WINDOW_FRAMES_COUNT)
+        id = 0;
+    if (!sWindowFrames[id].tiles)
+    {
+        char path[64];
+        snprintf(path, sizeof(path), "graphics/text_window/%u.png", id + 1);
+        sWindowFrames[id].tiles = AssetsLoad4bpp(path, NULL, NULL);
+        sWindowFrames[id].pal = AssetsGetPNGPalette(path, NULL);
+    }
+}
+
+const u8 *LoadTextWindowFrameGfx(u8 id)
+{
+    if (id == 0 || id > WINDOW_FRAMES_COUNT)
+        id = 1;
+    LoadWindowFrame(id - 1);
+    return sWindowFrames[id - 1].tiles;
+}
+
+const u16 *LoadTextWindowFramePal(u8 id)
+{
+    if (id == 0 || id > WINDOW_FRAMES_COUNT)
+        id = 1;
+    LoadWindowFrame(id - 1);
+    return sWindowFrames[id - 1].pal;
+}
+
+static const u16 *LoadTextWindowPalette(u8 index)
+{
+    if (!sTextWindowPalettes[index])
+    {
+        switch (index)
+        {
+        case 0:
+            sTextWindowPalettes[0] = AssetsGetPNGPalette("graphics/text_window/message_box.png", NULL);
+            break;
+        case 1:
+            sTextWindowPalettes[1] = AssetsLoadPal("graphics/text_window/text_pal1.pal", NULL);
+            break;
+        case 2:
+            sTextWindowPalettes[2] = AssetsLoadPal("graphics/text_window/text_pal2.pal", NULL);
+            break;
+        case 3:
+            sTextWindowPalettes[3] = AssetsLoadPal("graphics/text_window/text_pal3.pal", NULL);
+            break;
+        case 4:
+            sTextWindowPalettes[4] = AssetsLoadPal("graphics/text_window/text_pal4.pal", NULL);
+            break;
+        }
+    }
+    return sTextWindowPalettes[index];
+}
+
+#else
+
 const u8 gTextWindowFrame1_Gfx[] = INCBIN_U8("graphics/text_window/1.4bpp");
 static const u8 sTextWindowFrame2_Gfx[] = INCBIN_U8("graphics/text_window/2.4bpp");
 static const u8 sTextWindowFrame3_Gfx[] = INCBIN_U8("graphics/text_window/3.4bpp");
@@ -81,13 +145,19 @@ static const struct TilesPal sWindowFrames[WINDOW_FRAMES_COUNT] =
     {sTextWindowFrame20_Gfx, sTextWindowFrame20_Pal}
 };
 
+#endif // PLATFORM_PC
+
 // code
 const struct TilesPal *GetWindowFrameTilesPal(u8 id)
 {
     if (id >= WINDOW_FRAMES_COUNT)
-        return &sWindowFrames[0];
-    else
-        return &sWindowFrames[id];
+        id = 0;
+#ifdef PLATFORM_PC
+    LoadWindowFrame(id);
+    return &sWindowFrames[id];
+#else
+    return &sWindowFrames[id];
+#endif
 }
 
 void LoadMessageBoxGfx(u8 windowId, u16 destOffset, u8 palOffset)
@@ -103,8 +173,14 @@ void LoadUserWindowBorderGfx_(u8 windowId, u16 destOffset, u8 palOffset)
 
 void LoadWindowGfx(u8 windowId, u8 frameId, u16 destOffset, u8 palOffset)
 {
+#ifdef PLATFORM_PC
+    const struct TilesPal *tp = GetWindowFrameTilesPal(frameId);
+    LoadBgTiles(GetWindowAttribute(windowId, WINDOW_BG), tp->tiles, 0x120, destOffset);
+    LoadPalette(tp->pal, palOffset, PLTT_SIZE_4BPP);
+#else
     LoadBgTiles(GetWindowAttribute(windowId, WINDOW_BG), sWindowFrames[frameId].tiles, 0x120, destOffset);
     LoadPalette(sWindowFrames[frameId].pal, palOffset, PLTT_SIZE_4BPP);
+#endif
 }
 
 void LoadUserWindowBorderGfx(u8 windowId, u16 destOffset, u8 palOffset)
@@ -161,6 +237,22 @@ void rbox_fill_rectangle(u8 windowId)
 
 const u16 *GetTextWindowPalette(u8 id)
 {
+#ifdef PLATFORM_PC
+    switch (id)
+    {
+    case 0:
+        return LoadTextWindowPalette(0);
+    case 1:
+        return LoadTextWindowPalette(1);
+    case 2:
+        return LoadTextWindowPalette(2);
+    case 3:
+        return LoadTextWindowPalette(3);
+    case 4:
+    default:
+        return LoadTextWindowPalette(4);
+    }
+#else
     switch (id)
     {
     case 0:
@@ -182,6 +274,7 @@ const u16 *GetTextWindowPalette(u8 id)
     }
 
     return (const u16 *)(sTextWindowPalettes) + id;
+#endif
 }
 
 const u16 *GetOverworldTextboxPalettePtr(void)
@@ -192,6 +285,7 @@ const u16 *GetOverworldTextboxPalettePtr(void)
 // Effectively LoadUserWindowBorderGfx but specifying the bg directly instead of a window from that bg
 void LoadUserWindowBorderGfxOnBg(u8 bg, u16 destOffset, u8 palOffset)
 {
-    LoadBgTiles(bg, sWindowFrames[gSaveBlock2Ptr->optionsWindowFrameType].tiles, 0x120, destOffset);
-    LoadPalette(GetWindowFrameTilesPal(gSaveBlock2Ptr->optionsWindowFrameType)->pal, palOffset, PLTT_SIZE_4BPP);
+    const struct TilesPal *tp = GetWindowFrameTilesPal(gSaveBlock2Ptr->optionsWindowFrameType);
+    LoadBgTiles(bg, tp->tiles, 0x120, destOffset);
+    LoadPalette(tp->pal, palOffset, PLTT_SIZE_4BPP);
 }

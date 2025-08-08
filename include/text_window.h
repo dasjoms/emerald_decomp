@@ -9,8 +9,15 @@ struct TilesPal
     const u16 *pal;
 };
 
+#ifdef PLATFORM_PC
+const u8 *LoadTextWindowFrameGfx(u8 id);
+const u16 *LoadTextWindowFramePal(u8 id);
+#define gTextWindowFrame1_Gfx (LoadTextWindowFrameGfx(1))
+#define gTextWindowFrame1_Pal (LoadTextWindowFramePal(1))
+#else
 extern const u8 gTextWindowFrame1_Gfx[];
 extern const u16 gTextWindowFrame1_Pal[];
+#endif
 
 const struct TilesPal *GetWindowFrameTilesPal(u8 id);
 void LoadMessageBoxGfx(u8 windowId, u16 destOffset, u8 palOffset);
