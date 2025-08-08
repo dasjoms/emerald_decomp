@@ -86,6 +86,10 @@ void EnableVCountIntrAtLine150(void);
 
 #define B_START_SELECT (B_BUTTON | START_BUTTON | SELECT_BUTTON)
 
+// Runs a single iteration of the main game loop.
+// Returns FALSE to exit the loop.
+bool32 GameLoop(void);
+
 void AgbMain(void)
 {
     // Modern compilers are liberal with the stack on entry to this function,
@@ -128,44 +132,48 @@ void AgbMain(void)
     AGBPrintInit();
 #endif
 #endif
-    for (;;)
+    while (GameLoop())
+        ;
+}
+
+bool32 GameLoop(void)
+{
+    ReadKeys();
+
+    if (gSoftResetDisabled == FALSE
+     && JOY_HELD_RAW(A_BUTTON)
+     && JOY_HELD_RAW(B_START_SELECT) == B_START_SELECT)
     {
-        ReadKeys();
+        rfu_REQ_stopMode();
+        rfu_waitREQComplete();
+        DoSoftReset();
+    }
 
-        if (gSoftResetDisabled == FALSE
-         && JOY_HELD_RAW(A_BUTTON)
-         && JOY_HELD_RAW(B_START_SELECT) == B_START_SELECT)
-        {
-            rfu_REQ_stopMode();
-            rfu_waitREQComplete();
-            DoSoftReset();
-        }
+    if (Overworld_SendKeysToLinkIsRunning() == TRUE)
+    {
+        gLinkTransferringData = TRUE;
+        UpdateLinkAndCallCallbacks();
+        gLinkTransferringData = FALSE;
+    }
+    else
+    {
+        gLinkTransferringData = FALSE;
+        UpdateLinkAndCallCallbacks();
 
-        if (Overworld_SendKeysToLinkIsRunning() == TRUE)
+        if (Overworld_RecvKeysFromLinkIsRunning() == TRUE)
         {
+            gMain.newKeys = 0;
+            ClearSpriteCopyRequests();
             gLinkTransferringData = TRUE;
             UpdateLinkAndCallCallbacks();
             gLinkTransferringData = FALSE;
         }
-        else
-        {
-            gLinkTransferringData = FALSE;
-            UpdateLinkAndCallCallbacks();
-
-            if (Overworld_RecvKeysFromLinkIsRunning() == TRUE)
-            {
-                gMain.newKeys = 0;
-                ClearSpriteCopyRequests();
-                gLinkTransferringData = TRUE;
-                UpdateLinkAndCallCallbacks();
-                gLinkTransferringData = FALSE;
-            }
-        }
-
-        PlayTimeCounter_Update();
-        MapMusicMain();
-        WaitForVBlank();
     }
+
+    PlayTimeCounter_Update();
+    MapMusicMain();
+    WaitForVBlank();
+    return TRUE;
 }
 
 static void UpdateLinkAndCallCallbacks(void)

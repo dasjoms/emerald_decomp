@@ -56,6 +56,7 @@ extern u8 gLinkVSyncDisabled;
 extern u32 IntrMain_Buffer[];
 extern s8 gPcmDmaCounter;
 
+bool32 GameLoop(void);
 void AgbMain(void);
 void SetMainCallback2(MainCallback callback);
 void InitKeys(void);
