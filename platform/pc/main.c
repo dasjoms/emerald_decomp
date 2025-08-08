@@ -1,4 +1,5 @@
 #include "platform.h"
+#include "main.h"
 
 int main(int argc, char **argv)
 {
@@ -8,7 +9,7 @@ int main(int argc, char **argv)
     if (!PlatformInit())
         return 1;
 
-    while (PlatformRunFrame())
+    while (GameLoop() && PlatformRunFrame())
         ;
 
     PlatformShutdown();

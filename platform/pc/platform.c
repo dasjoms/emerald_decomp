@@ -14,7 +14,6 @@ bool PlatformRunFrame(void)
 {
     InputPoll();
     VideoUpdate();
-    TimerWaitVBlank();
     return true;
 }
 
