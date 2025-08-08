@@ -26,3 +26,4 @@
 - Switched rotating pocket indicator to load PNG graphics and palette at runtime, removed INCBIN assets from item menu icons, and expanded PC GBA shims with basic BG VRAM macros for desktop compilation.
 - Began migrating weather assets to runtime loading by pulling the cloud palette and tiles from PNGs, extracting the sandstorm palette, and preparing the cloud sprite sheet for PC builds; remaining weather graphics still use placeholders.
 - Completed weather asset migration by loading the fog palette from file, replacing all remaining weather tile INCBINs (fog, snow, bubbles, ash, rain, sandstorm) with PNG-based runtime loading and dynamic sprite sheets, and updating battle animations to use the new data.
+- Migrated Pokédex cry screen assets to runtime loading, decoding PNG graphics and palettes for the cry meter needle, meter, and background, removing the remaining INCBIN data.

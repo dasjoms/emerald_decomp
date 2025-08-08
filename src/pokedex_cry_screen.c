@@ -8,6 +8,9 @@
 #include "sound.h"
 #include "trig.h"
 #include "window.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 // Cry meter needle positions
 //
@@ -67,12 +70,82 @@ static EWRAM_DATA struct PokedexCryScreen *sDexCryScreen = NULL;
 static EWRAM_DATA u8 *sCryWaveformWindowTiledata = NULL;
 static EWRAM_DATA struct PokedexCryMeterNeedle *sCryMeterNeedle = NULL;
 
+#ifdef PLATFORM_PC
+
+static const u16 *LoadCryMeterNeedlePal(void)
+{
+    static const u16 *pal;
+    if (!pal)
+        pal = AssetsGetPNGPalette("graphics/pokedex/cry_meter_needle.png", NULL);
+    return pal;
+}
+
+static const u8 *LoadCryMeterNeedleGfx(size_t *size)
+{
+    static const u8 *gfx;
+    static size_t gfxSize;
+    if (!gfx)
+        gfx = AssetsLoad4bpp("graphics/pokedex/cry_meter_needle.png", NULL, &gfxSize);
+    if (size)
+        *size = gfxSize;
+    return gfx;
+}
+
+static const u16 *LoadCryMeterPal(void)
+{
+    static const u16 *pal;
+    if (!pal)
+        pal = AssetsGetPNGPalette("graphics/pokedex/cry_meter.png", NULL);
+    return pal;
+}
+
+static const u8 *LoadCryMeterGfx(void)
+{
+    static const u8 *gfx;
+    if (!gfx)
+        gfx = AssetsLoad4bpp("graphics/pokedex/cry_meter.png", NULL, NULL);
+    return gfx;
+}
+
+static const u16 *LoadCryScreenBgPal(void)
+{
+    static const u16 *pal;
+    if (!pal)
+        pal = AssetsGetPNGPalette("graphics/pokedex/cry_screen_bg.png", NULL);
+    return pal;
+}
+
+static const u8 *LoadCryScreenBgGfx(void)
+{
+    static const u8 *gfx;
+    if (!gfx)
+        gfx = AssetsLoad4bpp("graphics/pokedex/cry_screen_bg.png", NULL, NULL);
+    return gfx;
+}
+
+#define sCryMeterNeedle_Pal (LoadCryMeterNeedlePal())
+#define sCryMeterNeedle_Gfx (LoadCryMeterNeedleGfx(NULL))
+#define sCryMeter_Pal (LoadCryMeterPal())
+#define sCryMeter_Gfx (LoadCryMeterGfx())
+#define sCryScreenBg_Pal (LoadCryScreenBgPal())
+#define sCryScreenBg_Gfx (LoadCryScreenBgGfx())
+
+static struct SpriteSheet sCryMeterNeedleSpriteSheets[2];
+static struct SpritePalette sCryMeterNeedleSpritePalettes[2];
+
+#else
+
 static const u16 sCryMeterNeedle_Pal[] = INCBIN_U16("graphics/pokedex/cry_meter_needle.gbapal");
 static const u8 sCryMeterNeedle_Gfx[] = INCBIN_U8("graphics/pokedex/cry_meter_needle.4bpp");
 
 static const u16 sCryMeter_Tilemap[] = INCBIN_U16("graphics/pokedex/cry_meter_map.bin"); // Unused
 static const u16 sCryMeter_Pal[] = INCBIN_U16("graphics/pokedex/cry_meter.gbapal");
 static const u8 sCryMeter_Gfx[] = INCBIN_U8("graphics/pokedex/cry_meter.4bpp.lz");
+
+static const u16 sCryScreenBg_Pal[] = INCBIN_U16("graphics/pokedex/cry_screen_bg.gbapal");
+static const u8 sCryScreenBg_Gfx[] = INCBIN_U8("graphics/pokedex/cry_screen_bg.4bpp");
+
+#endif // PLATFORM_PC
 
 static const u16 sWaveformOffsets[][72] =
 {
@@ -157,10 +230,23 @@ static const u16 sWaveformOffsets[][72] =
         0x1C03, 0x1C07, 0x1C0B, 0x1C0F, 0x1C13, 0x1C17, 0x1C1B, 0x1C1F,
         0x2003, 0x2007, 0x200B, 0x200F, 0x2013, 0x2017, 0x201B, 0x201F
     }
-};
-
+}; 
+#ifndef PLATFORM_PC
 static const u16 sCryScreenBg_Pal[] = INCBIN_U16("graphics/pokedex/cry_screen_bg.gbapal");
 static const u8 sCryScreenBg_Gfx[] = INCBIN_U8("graphics/pokedex/cry_screen_bg.4bpp");
+
+static const struct SpriteSheet sCryMeterNeedleSpriteSheets[] =
+{
+    {sCryMeterNeedle_Gfx, sizeof(sCryMeterNeedle_Gfx), TAG_NEEDLE},
+    {},
+};
+
+static const struct SpritePalette sCryMeterNeedleSpritePalettes[] =
+{
+    {sCryMeterNeedle_Pal, TAG_NEEDLE},
+    {},
+};
+#endif // PLATFORM_PC
 
 static const u8 sWaveformTileDataNybbleMasks[] = {0xF0, 0x0F};
 
@@ -213,17 +299,6 @@ static const struct SpriteTemplate sCryMeterNeedleSpriteTemplate =
     .callback = SpriteCB_CryMeterNeedle
 };
 
-static const struct SpriteSheet sCryMeterNeedleSpriteSheets[] =
-{
-    {sCryMeterNeedle_Gfx, sizeof(sCryMeterNeedle_Gfx), TAG_NEEDLE},
-    {}
-};
-
-static const struct SpritePalette sCryMeterNeedleSpritePalettes[] =
-{
-    {sCryMeterNeedle_Pal, TAG_NEEDLE},
-    {}
-};
 
 bool8 LoadCryWaveformWindow(struct CryScreenWindow *window, u8 windowId)
 {
@@ -461,6 +536,21 @@ bool8 LoadCryMeter(struct CryScreenWindow *window, u8 windowId)
 
         CopyToWindowPixelBuffer(windowId, sCryMeter_Gfx, 0, 0);
         LoadPalette(sCryMeter_Pal, BG_PLTT_ID(window->paletteNo), PLTT_SIZE_4BPP);
+#ifdef PLATFORM_PC
+        {
+            size_t size;
+            sCryMeterNeedleSpriteSheets[0].data = LoadCryMeterNeedleGfx(&size);
+            sCryMeterNeedleSpriteSheets[0].size = size;
+            sCryMeterNeedleSpriteSheets[0].tag = TAG_NEEDLE;
+            sCryMeterNeedleSpriteSheets[1].data = NULL;
+            sCryMeterNeedleSpriteSheets[1].size = 0;
+            sCryMeterNeedleSpriteSheets[1].tag = 0;
+            sCryMeterNeedleSpritePalettes[0].data = LoadCryMeterNeedlePal();
+            sCryMeterNeedleSpritePalettes[0].tag = TAG_NEEDLE;
+            sCryMeterNeedleSpritePalettes[1].data = NULL;
+            sCryMeterNeedleSpritePalettes[1].tag = 0;
+        }
+#endif
         gDexCryScreenState++;
         break;
     case 1:
