@@ -1,5 +1,8 @@
 #include "global.h"
 #include "gba/m4a_internal.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/audio.h"
+#endif
 
 extern const u8 gCgb3Vol[];
 
@@ -97,6 +100,9 @@ void m4aSoundInit(void)
         MPlayOpen(mplayInfo, track, 2);
         track->chan = 0;
     }
+#ifdef PLATFORM_PC
+    AudioStart();
+#endif
 }
 
 void m4aSoundMain(void)
@@ -256,6 +262,7 @@ void m4aMPlayImmInit(struct MusicPlayerInfo *mplayInfo)
 
 void MPlayExtender(struct CgbChannel *cgbChans)
 {
+#ifndef PLATFORM_PC
     struct SoundInfo *soundInfo;
     u32 ident;
 
@@ -323,11 +330,16 @@ void MPlayExtender(struct CgbChannel *cgbChans)
     cgbChans[3].panMask = 0x88;
 
     soundInfo->ident = ident;
+#else
+    (void)cgbChans;
+#endif
 }
 
 void MusicPlayerJumpTableCopy(void)
 {
+#ifndef PLATFORM_PC
     asm("swi 0x2A");
+#endif
 }
 
 void ClearChain(void *x)
@@ -353,7 +365,7 @@ void Clear64byte(void *x)
 void SoundInit(struct SoundInfo *soundInfo)
 {
     soundInfo->ident = 0;
-
+#ifndef PLATFORM_PC
     if (REG_DMA1CNT & (DMA_REPEAT << 16))
         REG_DMA1CNT = ((DMA_ENABLE | DMA_START_NOW | DMA_32BIT | DMA_SRC_INC | DMA_DEST_FIXED) << 16) | 4;
 
@@ -376,7 +388,7 @@ void SoundInit(struct SoundInfo *soundInfo)
     REG_DMA1DAD = (s32)&REG_FIFO_A;
     REG_DMA2SAD = (s32)soundInfo->pcmBuffer + PCM_DMA_BUF_SIZE;
     REG_DMA2DAD = (s32)&REG_FIFO_B;
-
+#endif
     SOUND_INFO_PTR = soundInfo;
     CpuFill32(0, soundInfo, sizeof(struct SoundInfo));
 
@@ -411,7 +423,7 @@ void SampleFreqSet(u32 freq)
 
     // CPU frequency 16.78Mhz
     soundInfo->divFreq = (16777216 / soundInfo->pcmFreq + 1) >> 1;
-
+#ifndef PLATFORM_PC
     // Turn off timer 0.
     REG_TM0CNT_H = 0;
 
@@ -427,6 +439,7 @@ void SampleFreqSet(u32 freq)
         ;
 
     REG_TM0CNT_H = TIMER_ENABLE | TIMER_1CLK;
+#endif
 }
 
 void m4aSoundMode(u32 mode)
@@ -473,7 +486,9 @@ void m4aSoundMode(u32 mode)
     if (temp)
     {
         temp = (temp & 0x300000) >> 14;
+        #ifndef PLATFORM_PC
         REG_SOUNDBIAS_H = (REG_SOUNDBIAS_H & 0x3F) | temp;
+        #endif
     }
 
     temp = mode & SOUND_MODE_FREQ;
@@ -534,6 +549,7 @@ void m4aSoundVSyncOff(void)
     {
         soundInfo->ident += 10;
 
+#ifndef PLATFORM_PC
         if (REG_DMA1CNT & (DMA_REPEAT << 16))
             REG_DMA1CNT = ((DMA_ENABLE | DMA_START_NOW | DMA_32BIT | DMA_SRC_INC | DMA_DEST_FIXED) << 16) | 4;
 
@@ -542,6 +558,7 @@ void m4aSoundVSyncOff(void)
 
         REG_DMA1CNT_H = DMA_32BIT;
         REG_DMA2CNT_H = DMA_32BIT;
+#endif
 
         CpuFill32(0, soundInfo->pcmBuffer, sizeof(soundInfo->pcmBuffer));
     }
@@ -555,8 +572,10 @@ void m4aSoundVSyncOn(void)
     if (ident == ID_NUMBER)
         return;
 
+    #ifndef PLATFORM_PC
     REG_DMA1CNT_H = DMA_ENABLE | DMA_START_SPECIAL | DMA_32BIT | DMA_REPEAT;
     REG_DMA2CNT_H = DMA_ENABLE | DMA_START_SPECIAL | DMA_32BIT | DMA_REPEAT;
+    #endif
 
     soundInfo->pcmDmaCounter = 0;
     soundInfo->ident = ident - 10;
@@ -856,6 +875,7 @@ u32 MidiKeyToCgbFreq(u8 chanNum, u8 key, u8 fineAdjust)
 
 void CgbOscOff(u8 chanNum)
 {
+#ifndef PLATFORM_PC
     switch (chanNum)
     {
     case 1:
@@ -873,6 +893,9 @@ void CgbOscOff(u8 chanNum)
         REG_NR42 = 8;
         REG_NR44 = 0x80;
     }
+#else
+    (void)chanNum;
+#endif
 }
 
 static inline int CgbPan(struct CgbChannel *chan)
@@ -924,6 +947,7 @@ void CgbModVol(struct CgbChannel *chan)
 
 void CgbSound(void)
 {
+#ifndef PLATFORM_PC
     s32 ch;
     struct CgbChannel *channels;
     s32 prevC15;
@@ -1229,6 +1253,7 @@ void CgbSound(void)
     channel_complete:
         channels->modify = 0;
     }
+#endif
 }
 
 void m4aMPlayTempoControl(struct MusicPlayerInfo *mplayInfo, u16 tempo)
@@ -1758,7 +1783,7 @@ void SetPokemonCryChorus(s8 val)
 void SetPokemonCryStereo(u32 val)
 {
     struct SoundInfo *soundInfo = SOUND_INFO_PTR;
-
+#ifndef PLATFORM_PC
     if (val)
     {
         REG_SOUNDCNT_H = SOUND_B_TIMER_0 | SOUND_B_LEFT_OUTPUT
@@ -1773,6 +1798,12 @@ void SetPokemonCryStereo(u32 val)
                        | SOUND_B_MIX_HALF | SOUND_A_MIX_HALF | SOUND_CGB_MIX_FULL;
         soundInfo->mode |= 1;
     }
+#else
+    if (val)
+        soundInfo->mode &= ~1;
+    else
+        soundInfo->mode |= 1;
+#endif
 }
 
 void SetPokemonCryPriority(u8 val)
