@@ -28,9 +28,18 @@ typedef struct PalCacheEntry
     struct PalCacheEntry *next;
 } PalCacheEntry;
 
+typedef struct TilesCacheEntry
+{
+    char *key;
+    u8 *tiles;
+    size_t size;
+    struct TilesCacheEntry *next;
+} TilesCacheEntry;
+
 static FileCacheEntry *sFileCache;
 static PngCacheEntry *sPngCache;
 static PalCacheEntry *sPalCache;
+static TilesCacheEntry *sTilesCache;
 
 void *AssetsLoadFile(const char *path, size_t *size)
 {
@@ -233,4 +242,96 @@ u16 *AssetsLoadPal(const char *path, size_t *size)
     if (size)
         *size = count * sizeof(u16);
     return colors;
+}
+
+u8 *AssetsLoad4bpp(const char *pngPath, const char *palPath, size_t *size)
+{
+    if (size)
+        *size = 0;
+
+    char *key;
+    if (SDL_asprintf(&key, "%s|%s", pngPath, palPath ? palPath : "") < 0)
+        return NULL;
+
+    for (TilesCacheEntry *e = sTilesCache; e != NULL; e = e->next)
+    {
+        if (strcmp(e->key, key) == 0)
+        {
+            if (size)
+                *size = e->size;
+            SDL_free(key);
+            return e->tiles;
+        }
+    }
+
+    SDL_Surface *surf = AssetsLoadPNG(pngPath);
+    size_t palSize = 0;
+    u16 *pal = palPath ? AssetsLoadPal(palPath, &palSize) : NULL;
+    if (!surf || !pal)
+    {
+        SDL_free(key);
+        return NULL;
+    }
+
+    int width = surf->w;
+    int height = surf->h;
+    if (width % 8 != 0 || height % 8 != 0)
+    {
+        SDL_free(key);
+        return NULL;
+    }
+
+    size_t tiles = (width * height) / (8 * 8);
+    size_t bufSize = tiles * 32; // 32 bytes per tile
+    u8 *buffer = malloc(bufSize);
+    if (!buffer)
+    {
+        SDL_free(key);
+        return NULL;
+    }
+
+    u32 *pixels = surf->pixels;
+    int pitch = surf->pitch / 4; // in u32 units
+    size_t palCount = palSize / sizeof(u16);
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            u32 pixel = pixels[y * pitch + x];
+            u8 r, g, b, a;
+            SDL_GetRGBA(pixel, surf->format, &r, &g, &b, &a);
+            u16 color = (r >> 3) | ((g >> 3) << 5) | ((b >> 3) << 10);
+            u8 index = 0;
+            for (; index < palCount; index++)
+            {
+                if (pal[index] == color)
+                    break;
+            }
+            size_t pixelIndex = y * width + x;
+            size_t byteIndex = pixelIndex / 2;
+            if (pixelIndex & 1)
+                buffer[byteIndex] |= index << 4;
+            else
+                buffer[byteIndex] = index & 0xF;
+        }
+    }
+
+    TilesCacheEntry *entry = malloc(sizeof(*entry));
+    if (!entry)
+    {
+        free(buffer);
+        SDL_free(key);
+        return NULL;
+    }
+
+    entry->key = key;
+    entry->tiles = buffer;
+    entry->size = bufSize;
+    entry->next = sTilesCache;
+    sTilesCache = entry;
+
+    if (size)
+        *size = bufSize;
+    return buffer;
 }

@@ -18,6 +18,10 @@ SDL_Surface *AssetsLoadPNG(const char *path);
 // The returned buffer is cached and owned by the asset system.
 u16 *AssetsLoadPal(const char *path, size_t *size);
 
+// Load a paletted PNG and convert it to 4bpp tile data using the given
+// palette. The returned buffer is cached and owned by the asset system.
+u8 *AssetsLoad4bpp(const char *pngPath, const char *palPath, size_t *size);
+
 // No-op placeholder provided for API compatibility with earlier loaders. The
 // cache retains loaded resources for the program lifetime.
 void AssetsFreeFile(void *buffer);
