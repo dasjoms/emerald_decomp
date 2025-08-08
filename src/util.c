@@ -125,11 +125,7 @@ static const u16 *sMiscBlankPal;
 const u8 *LoadMiscBlankGfx(void)
 {
     if (!sMiscBlankGfx)
-    {
-        SDL_Surface *surf = AssetsLoadPNG("graphics/interface/blank.png");
-        if (surf)
-            sMiscBlankGfx = calloc(1, 0x20); // 8x8 tile of zeros
-    }
+        sMiscBlankGfx = AssetsLoad4bpp("graphics/interface/blank.png", "graphics/interface/blank.pal", NULL);
     return sMiscBlankGfx;
 }
 

@@ -20,3 +20,4 @@
 - Added basic asset caching and PNG decoding with SDL_image, exposing `AssetsLoadPNG` and initializing SDL_image in the platform layer to progress runtime asset loading.
 - Filled out the PC GBA shim with display and palette constants and replaced one `INCBIN` usage with a lazy loader in `util.c`, beginning actual runtime asset substitution.
 - Implemented JASC-PAL palette parsing and caching in the PC asset loader, switched blank interface assets to load PNG/palette at runtime, and updated contest utilities to assign these resources dynamically.
+- Added PNG to 4bpp tile conversion with caching in the PC asset loader and updated `LoadMiscBlankGfx` to use runtime-loaded tiles.
