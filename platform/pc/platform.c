@@ -4,17 +4,25 @@
 #include "input.h"
 #include "timer.h"
 #include "fs.h"
+#include <SDL.h>
 
 bool PlatformInit(void)
 {
-    return VideoInit() && AudioInit() && TimerInit();
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER) < 0)
+        return false;
+    if (!VideoInit() || !AudioInit() || !TimerInit())
+    {
+        SDL_Quit();
+        return false;
+    }
+    return true;
 }
 
 bool PlatformRunFrame(void)
 {
     InputPoll();
     VideoUpdate();
-    return true;
+    return !InputShouldQuit();
 }
 
 void PlatformShutdown(void)
@@ -22,6 +30,7 @@ void PlatformShutdown(void)
     AudioShutdown();
     VideoShutdown();
     TimerShutdown();
+    SDL_Quit();
 }
 
 void PlatformSetBackdropColor(u16 color)

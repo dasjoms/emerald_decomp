@@ -62,5 +62,10 @@
 #define D_DOWN          0x0080
 #define R_BUTTON        0x0100
 #define L_BUTTON        0x0200
+#define DPAD_RIGHT      D_RIGHT
+#define DPAD_LEFT       D_LEFT
+#define DPAD_UP         D_UP
+#define DPAD_DOWN       D_DOWN
+#define DPAD_ANY        (DPAD_RIGHT | DPAD_LEFT | DPAD_UP | DPAD_DOWN)
 
 #endif // PC_GBA_IO_REG_H

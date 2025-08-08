@@ -3,7 +3,8 @@
 # PC build rules
 CC := cc
 CFLAGS ?= -O2
-CFLAGS += -DPLATFORM_PC -Iinclude
+SDL_CFLAGS := $(shell sdl2-config --cflags)
+CFLAGS += -DPLATFORM_PC -Iinclude $(SDL_CFLAGS)
 
 PC_SRCS := src/main.c \
            platform/pc/platform.c \
