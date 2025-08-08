@@ -6,3 +6,7 @@ This fork aims to transform the Pokémon Emerald decompilation into a desktop ap
 2. **Flexible Pokémon pipeline** – Replace the ROM‐centric asset workflow with data and image files that can be discovered at runtime. Loading PNG graphics and external metadata will remove the need to hand‑edit large tables and convert palettes, making it easy to add or modify species.
 
 All new platform and tooling code lives outside of the original GBA build, preserving the ability to assemble the ROM while enabling experimentation on desktop systems.
+
+# Tests
+
+Do NOT try to "make" the ROM yourself as it goes against the project's goal. Read AGENTS_STEPS.md for further project information.
