@@ -413,6 +413,6 @@ $(ROM): $(ELF)
 
 # Symbol file (`make syms`)
 $(SYM): $(ELF)
-        $(OBJDUMP) -t $< | sort -u | grep -E "^0[2389]" | $(PERL) -p -e 's/^(\w{8}) (\w).{6} \S+\t(\w{8}) (\S+)$$/\1 \2 \3 \4/g' > $@
+	$(OBJDUMP) -t $< | sort -u | grep -E "^0[2389]" | $(PERL) -p -e 's/^(\w{8}) (\w).{6} \S+\t(\w{8}) (\S+)$\$/\1 \2 \3 \4/g' > $@
 
 endif # PLATFORM
