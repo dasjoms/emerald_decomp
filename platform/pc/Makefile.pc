@@ -4,8 +4,10 @@
 CC := cc
 CFLAGS ?= -O2
 SDL_CFLAGS := $(shell sdl2-config --cflags)
+SDL_LIBS := $(shell sdl2-config --libs)
 # Use -iquote so our headers don't override system ones like <malloc.h>
 CFLAGS += -DPLATFORM_PC -iquote include $(SDL_CFLAGS)
+LDFLAGS := $(SDL_LIBS) -lSDL2_image -lSDL2_mixer
 
 PC_SRCS := platform/pc/platform.c \
            platform/pc/main.c \
@@ -22,12 +24,17 @@ PC_SRCS := platform/pc/platform.c \
 
 PC_OBJS := $(patsubst %.c,build/pc/%.o,$(PC_SRCS))
 
-all: $(PC_OBJS)
+OUTPUT := pokeemerald.exe
+
+all: $(OUTPUT)
+
+$(OUTPUT): $(PC_OBJS)
+>$(CC) $(PC_OBJS) $(LDFLAGS) -o $@
 
 build/pc/%.o: %.c
 >mkdir -p $(dir $@)
 >$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
->rm -rf build/pc
+>rm -rf build/pc $(OUTPUT)
 
