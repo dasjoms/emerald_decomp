@@ -12,6 +12,9 @@
 #include "strings.h"
 #include "sound.h"
 #include "constants/songs.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 // Cursors after this point are created using a sprite with their own task.
 // This allows them to have idle animations. Cursors prior to this are simply printed text.
@@ -282,10 +285,44 @@ static const struct SpriteTemplate sSpriteTemplate_RedArrowCursor =
     .callback = SpriteCallback_RedArrowCursor,
 };
 
+#ifdef PLATFORM_PC
+static const u16 *LoadRedInterfacePal(void)
+{
+    static const u16 *sPal;
+    if (!sPal)
+        sPal = AssetsLoadPal("graphics/interface/red.pal", NULL);
+    return sPal;
+}
+
+static const u8 *LoadScrollIndicatorGfx(void)
+{
+    static const u8 *sGfx;
+    if (!sGfx)
+        sGfx = AssetsLoad4bpp("graphics/interface/scroll_indicator.png", "graphics/interface/red.pal", NULL);
+    return sGfx;
+}
+
+static const u8 *LoadOutlineCursorGfx(void)
+{
+    static const u8 *sGfx;
+    if (!sGfx)
+        sGfx = AssetsLoad4bpp("graphics/interface/outline_cursor.png", "graphics/interface/red.pal", NULL);
+    return sGfx;
+}
+
+static const u8 *LoadArrowCursorGfx(void)
+{
+    static const u8 *sGfx;
+    if (!sGfx)
+        sGfx = AssetsLoad4bpp("graphics/interface/arrow_cursor.png", "graphics/interface/red.pal", NULL);
+    return sGfx;
+}
+#else
 static const u16 sRedInterface_Pal[]    = INCBIN_U16("graphics/interface/red.gbapal"); // Shared by all of the below gfx
 static const u32 sScrollIndicator_Gfx[] = INCBIN_U32("graphics/interface/scroll_indicator.4bpp.lz");
 static const u32 sOutlineCursor_Gfx[]   = INCBIN_U32("graphics/interface/outline_cursor.4bpp.lz");
 static const u32 sArrowCursor_Gfx[]     = INCBIN_U32("graphics/interface/arrow_cursor.4bpp.lz");
+#endif
 
 // code
 static void ListMenuDummyTask(u8 taskId)
@@ -1047,11 +1084,34 @@ static u8 AddScrollIndicatorArrowObject(u8 arrowDir, u8 x, u8 y, u16 tileTag, u1
 
 u8 AddScrollIndicatorArrowPair(const struct ScrollArrowsTemplate *arrowInfo, u16 *scrollOffset)
 {
+#ifdef PLATFORM_PC
+    struct SpriteSheet spriteSheet;
+    struct SpritePalette spritePal;
+    const u16 *pal = LoadRedInterfacePal();
+#else
     struct CompressedSpriteSheet spriteSheet;
     struct SpritePalette spritePal;
+#endif
     struct ScrollIndicatorPair *data;
     u8 taskId;
 
+#ifdef PLATFORM_PC
+    spriteSheet.data = LoadScrollIndicatorGfx();
+    spriteSheet.size = 0x100;
+    spriteSheet.tag = arrowInfo->tileTag;
+    LoadSpriteSheet(&spriteSheet);
+
+    if (arrowInfo->palTag == TAG_NONE)
+    {
+        LoadPalette(pal, OBJ_PLTT_ID(arrowInfo->palNum), PLTT_SIZE_4BPP);
+    }
+    else
+    {
+        spritePal.data = pal;
+        spritePal.tag = arrowInfo->palTag;
+        LoadSpritePalette(&spritePal);
+    }
+#else
     spriteSheet.data = sScrollIndicator_Gfx;
     spriteSheet.size = 0x100;
     spriteSheet.tag = arrowInfo->tileTag;
@@ -1067,6 +1127,7 @@ u8 AddScrollIndicatorArrowPair(const struct ScrollArrowsTemplate *arrowInfo, u16
         spritePal.tag = arrowInfo->palTag;
         LoadSpritePalette(&spritePal);
     }
+#endif
 
     taskId = CreateTask(Task_ScrollIndicatorArrowPair, 0);
     data = (void *) gTasks[taskId].data;
@@ -1292,12 +1353,35 @@ void ListMenuSetUpRedOutlineCursorSpriteOamTable(u16 rowWidth, u16 rowHeight, st
 
 static u8 ListMenuAddRedOutlineCursorObject(struct CursorStruct *cursor)
 {
+#ifdef PLATFORM_PC
+    struct SpriteSheet spriteSheet;
+    struct SpritePalette spritePal;
+    const u16 *pal = LoadRedInterfacePal();
+#else
     struct CompressedSpriteSheet spriteSheet;
     struct SpritePalette spritePal;
+#endif
     struct RedOutlineCursor *data;
     struct SpriteTemplate spriteTemplate;
     u8 taskId;
 
+#ifdef PLATFORM_PC
+    spriteSheet.data = LoadOutlineCursorGfx();
+    spriteSheet.size = 0x100;
+    spriteSheet.tag = cursor->tileTag;
+    LoadSpriteSheet(&spriteSheet);
+
+    if (cursor->palTag == TAG_NONE)
+    {
+        LoadPalette(pal, OBJ_PLTT_ID(cursor->palNum), PLTT_SIZE_4BPP);
+    }
+    else
+    {
+        spritePal.data = pal;
+        spritePal.tag = cursor->palTag;
+        LoadSpritePalette(&spritePal);
+    }
+#else
     spriteSheet.data = sOutlineCursor_Gfx;
     spriteSheet.size = 0x100;
     spriteSheet.tag = cursor->tileTag;
@@ -1313,6 +1397,7 @@ static u8 ListMenuAddRedOutlineCursorObject(struct CursorStruct *cursor)
         spritePal.tag = cursor->palTag;
         LoadSpritePalette(&spritePal);
     }
+#endif
 
     taskId = CreateTask(Task_RedOutlineCursor, 0);
     data = (void *) gTasks[taskId].data;
@@ -1377,12 +1462,35 @@ static void Task_RedArrowCursor(u8 taskId)
 
 static u8 ListMenuAddRedArrowCursorObject(struct CursorStruct *cursor)
 {
+#ifdef PLATFORM_PC
+    struct SpriteSheet spriteSheet;
+    struct SpritePalette spritePal;
+    const u16 *pal = LoadRedInterfacePal();
+#else
     struct CompressedSpriteSheet spriteSheet;
     struct SpritePalette spritePal;
+#endif
     struct RedArrowCursor *data;
     struct SpriteTemplate spriteTemplate;
     u8 taskId;
 
+#ifdef PLATFORM_PC
+    spriteSheet.data = LoadArrowCursorGfx();
+    spriteSheet.size = 0x80;
+    spriteSheet.tag = cursor->tileTag;
+    LoadSpriteSheet(&spriteSheet);
+
+    if (cursor->palTag == TAG_NONE)
+    {
+        LoadPalette(pal, OBJ_PLTT_ID(cursor->palNum), PLTT_SIZE_4BPP);
+    }
+    else
+    {
+        spritePal.data = pal;
+        spritePal.tag = cursor->palTag;
+        LoadSpritePalette(&spritePal);
+    }
+#else
     spriteSheet.data = sArrowCursor_Gfx;
     spriteSheet.size = 0x80;
     spriteSheet.tag = cursor->tileTag;
@@ -1398,6 +1506,7 @@ static u8 ListMenuAddRedArrowCursorObject(struct CursorStruct *cursor)
         spritePal.tag = cursor->palTag;
         LoadSpritePalette(&spritePal);
     }
+#endif
 
     taskId = CreateTask(Task_RedArrowCursor, 0);
     data = (void *) gTasks[taskId].data;
