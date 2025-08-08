@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 bool AudioInit(void);
+void AudioStart(void);
 void AudioShutdown(void);
 
 #endif // PLATFORM_PC_AUDIO_H
