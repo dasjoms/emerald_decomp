@@ -162,8 +162,14 @@ const struct TilesPal *GetWindowFrameTilesPal(u8 id)
 
 void LoadMessageBoxGfx(u8 windowId, u16 destOffset, u8 palOffset)
 {
+#ifdef PLATFORM_PC
+    const u8 *tiles = AssetsLoad4bpp("graphics/text_window/message_box.png", NULL, NULL);
+    LoadBgTiles(GetWindowAttribute(windowId, WINDOW_BG), tiles, 0x1C0, destOffset);
+    LoadPalette(GetOverworldTextboxPalettePtr(), palOffset, PLTT_SIZE_4BPP);
+#else
     LoadBgTiles(GetWindowAttribute(windowId, WINDOW_BG), gMessageBox_Gfx, 0x1C0, destOffset);
     LoadPalette(GetOverworldTextboxPalettePtr(), palOffset, PLTT_SIZE_4BPP);
+#endif
 }
 
 void LoadUserWindowBorderGfx_(u8 windowId, u16 destOffset, u8 palOffset)
@@ -279,7 +285,11 @@ const u16 *GetTextWindowPalette(u8 id)
 
 const u16 *GetOverworldTextboxPalettePtr(void)
 {
+#ifdef PLATFORM_PC
+    return LoadTextWindowPalette(0);
+#else
     return gMessageBox_Pal;
+#endif
 }
 
 // Effectively LoadUserWindowBorderGfx but specifying the bg directly instead of a window from that bg

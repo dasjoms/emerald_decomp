@@ -31,6 +31,12 @@ extern struct SoundInfo *gSoundInfoPtr;
 #define PLTT_SIZE     (BG_PLTT_SIZE + OBJ_PLTT_SIZE)
 #define PLTT_SIZEOF(n) ((n) * sizeof(u16))
 
+#define TILE_SIZE(n) ((n) * 8)
+#define TILE_SIZE_4BPP TILE_SIZE(4)
+#define TILE_OFFSET_4BPP(n) ((n) * TILE_SIZE_4BPP)
+#define PLTT_SIZE_4BPP PLTT_SIZEOF(16)
+#define PLTT_OFFSET_4BPP(n) ((n) * PLTT_SIZE_4BPP)
+
 #define DISPLAY_WIDTH  240
 #define DISPLAY_HEIGHT 160
 
