@@ -2,6 +2,7 @@
 #define GUARD_GBA_M4A_INTERNAL_H
 
 #include "gba/gba.h"
+#include <stdint.h>
 
 // ASCII encoding of 'Smsh' in reverse
 // This is presumably short for SMASH, the developer of MKS4AGB.
@@ -242,7 +243,7 @@ struct PokemonCrySong
     u8 part0; // 0x11
     u8 tuneValue; // 0x12
     u8 gotoCmd; // 0x13
-    u32 gotoTarget; // 0x14
+    uintptr_t gotoTarget; // 0x14
     u8 part1; // 0x18
     u8 tuneValue2; // 0x19
     u8 cont[2]; // 0x1A
@@ -406,8 +407,13 @@ extern const struct ToneData voicegroup_dummy;
 extern char gNumMusicPlayers[];
 extern char gMaxLines[];
 
+#ifdef PLATFORM_PC
+#define NUM_MUSIC_PLAYERS 4
+#define MAX_LINES 0
+#else
 #define NUM_MUSIC_PLAYERS ((u16)gNumMusicPlayers)
 #define MAX_LINES ((u32)gMaxLines)
+#endif
 
 u32 umul3232H32(u32 multiplier, u32 multiplicand);
 void SoundMain(void);
