@@ -1,3 +1,11 @@
+# Select build platform (gba by default)
+PLATFORM    ?= gba
+
+# If building for PC, hand off to the dedicated PC makefile and stop
+ifeq ($(PLATFORM),pc)
+include platform/pc/Makefile.pc
+else
+
 # GBA rom header
 TITLE       := POKEMON EMER
 GAME_CODE   := BPEE
@@ -5,10 +13,6 @@ MAKER_CODE  := 01
 REVISION    := 0
 MODERN      ?= 0
 KEEP_TEMPS  ?= 0
-PLATFORM    ?= gba
-ifeq ($(PLATFORM),pc)
-  CFLAGS += -DPLATFORM_PC
-endif
 
 # `File name`.gba ('_modern' will be appended to the modern builds)
 FILE_NAME := pokeemerald
@@ -409,4 +413,6 @@ $(ROM): $(ELF)
 
 # Symbol file (`make syms`)
 $(SYM): $(ELF)
-	$(OBJDUMP) -t $< | sort -u | grep -E "^0[2389]" | $(PERL) -p -e 's/^(\w{8}) (\w).{6} \S+\t(\w{8}) (\S+)$$/\1 \2 \3 \4/g' > $@
+        $(OBJDUMP) -t $< | sort -u | grep -E "^0[2389]" | $(PERL) -p -e 's/^(\w{8}) (\w).{6} \S+\t(\w{8}) (\S+)$$/\1 \2 \3 \4/g' > $@
+
+endif # PLATFORM
