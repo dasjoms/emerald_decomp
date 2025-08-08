@@ -24,3 +24,4 @@
 - Extracted palettes from PNGs in the asset loader and switched text window frames and palettes to load at runtime, removing INCBIN dependencies for the PC build.
 - Replaced message box graphics and palette with PNG-based runtime loading, removed corresponding INCBIN data, and extended PC GBA shims with tile and palette size macros so text windows compile on desktop.
 - Switched rotating pocket indicator to load PNG graphics and palette at runtime, removed INCBIN assets from item menu icons, and expanded PC GBA shims with basic BG VRAM macros for desktop compilation.
+- Began migrating weather assets to runtime loading by pulling the cloud palette and tiles from PNGs, extracting the sandstorm palette, and preparing the cloud sprite sheet for PC builds; remaining weather graphics still use placeholders.
