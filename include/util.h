@@ -3,7 +3,12 @@
 
 #include "sprite.h"
 
+#ifdef PLATFORM_PC
+const u8 *LoadMiscBlankGfx(void);
+#define gMiscBlank_Gfx (LoadMiscBlankGfx())
+#else
 extern const u8 gMiscBlank_Gfx[]; // unused in Emerald
+#endif
 extern const u32 gBitTable[];
 
 u8 CreateInvisibleSpriteWithCallback(void (*callback)(struct Sprite *));

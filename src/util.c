@@ -3,6 +3,9 @@
 #include "sprite.h"
 #include "palette.h"
 #include "constants/rgb.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 const u32 gBitTable[] =
 {
@@ -114,7 +117,18 @@ static const u16 sCrc16Table[] =
     0x7BC7, 0x6A4E, 0x58D5, 0x495C, 0x3DE3, 0x2C6A, 0x1EF1, 0x0F78,
 };
 
+#ifdef PLATFORM_PC
+static const u8 *sMiscBlankGfx;
+
+const u8 *LoadMiscBlankGfx(void)
+{
+    if (!sMiscBlankGfx)
+        sMiscBlankGfx = AssetsLoadFile("graphics/interface/blank.4bpp", NULL);
+    return sMiscBlankGfx;
+}
+#else
 const u8 gMiscBlank_Gfx[] = INCBIN_U8("graphics/interface/blank.4bpp");
+#endif
 
 u8 CreateInvisibleSpriteWithCallback(void (*callback)(struct Sprite *))
 {
