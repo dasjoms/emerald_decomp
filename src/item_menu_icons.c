@@ -11,6 +11,10 @@
 #include "window.h"
 #include "constants/items.h"
 
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
+
 enum {
     TAG_BAG_GFX = 100,
     TAG_ROTATING_BALL_GFX,
@@ -33,10 +37,34 @@ static void SpriteCB_SwitchPocketRotatingBallInit(struct Sprite *sprite);
 static void SpriteCB_SwitchPocketRotatingBallContinue(struct Sprite *sprite);
 
 // static const rom data
+#ifdef PLATFORM_PC
+static struct SpriteSheet sRotatingBallTable = { NULL, 0, TAG_ROTATING_BALL_GFX };
+static struct SpritePalette sRotatingBallPaletteTable = { NULL, TAG_ROTATING_BALL_GFX };
+static void LoadRotatingBallGfx(void)
+{
+    if (!sRotatingBallTable.data)
+    {
+        size_t size = 0;
+        sRotatingBallTable.data = AssetsLoad4bpp("graphics/bag/rotating_ball.png", NULL, &size);
+        sRotatingBallTable.size = (u16)size;
+    }
+    if (!sRotatingBallPaletteTable.data)
+        sRotatingBallPaletteTable.data = AssetsGetPNGPalette("graphics/bag/rotating_ball.png", NULL);
+}
+#else
 static const u16 sRotatingBall_Pal[] = INCBIN_U16("graphics/bag/rotating_ball.gbapal");
 static const u8 sRotatingBall_Gfx[] = INCBIN_U8("graphics/bag/rotating_ball.4bpp");
 static const u8 sCherryUnused[] = INCBIN_U8("graphics/unused/cherry.4bpp");
 static const u16 sCherryUnused_Pal[] = INCBIN_U16("graphics/unused/cherry.gbapal");
+static const struct SpriteSheet sRotatingBallTable =
+{
+    sRotatingBall_Gfx, sizeof(sRotatingBall_Gfx), TAG_ROTATING_BALL_GFX
+};
+static const struct SpritePalette sRotatingBallPaletteTable =
+{
+    sRotatingBall_Pal, TAG_ROTATING_BALL_GFX
+};
+#endif
 
 static const struct OamData sBagOamData =
 {
@@ -203,15 +231,6 @@ static const union AffineAnimCmd *const sRotatingBallAnimCmds_FullRotation[] =
     sSpriteAffineAnim_RotatingBallRotation2,
 };
 
-static const struct SpriteSheet sRotatingBallTable =
-{
-    sRotatingBall_Gfx, sizeof(sRotatingBall_Gfx), TAG_ROTATING_BALL_GFX
-};
-
-static const struct SpritePalette sRotatingBallPaletteTable =
-{
-    sRotatingBall_Pal, TAG_ROTATING_BALL_GFX
-};
 
 static const struct SpriteTemplate sRotatingBallSpriteTemplate =
 {
@@ -497,6 +516,9 @@ static void SpriteCB_ShakeBagSprite(struct Sprite *sprite)
 void AddSwitchPocketRotatingBallSprite(s16 rotationDirection)
 {
     u8 *spriteId = &gBagMenu->spriteIds[ITEMMENUSPRITE_BALL];
+#ifdef PLATFORM_PC
+    LoadRotatingBallGfx();
+#endif
     LoadSpriteSheet(&sRotatingBallTable);
     LoadSpritePalette(&sRotatingBallPaletteTable);
     *spriteId = CreateSprite(&sRotatingBallSpriteTemplate, 16, 16, 0);

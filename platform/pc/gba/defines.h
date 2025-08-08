@@ -37,6 +37,12 @@ extern struct SoundInfo *gSoundInfoPtr;
 #define PLTT_SIZE_4BPP PLTT_SIZEOF(16)
 #define PLTT_OFFSET_4BPP(n) ((n) * PLTT_SIZE_4BPP)
 
+#define BG_VRAM        0
+#define BG_CHAR_SIZE   0x4000
+#define BG_SCREEN_SIZE 0x800
+#define BG_CHAR_ADDR(n)   (BG_VRAM + (BG_CHAR_SIZE * (n)))
+#define BG_SCREEN_ADDR(n) (BG_VRAM + (BG_SCREEN_SIZE * (n)))
+
 #define DISPLAY_WIDTH  240
 #define DISPLAY_HEIGHT 160
 
