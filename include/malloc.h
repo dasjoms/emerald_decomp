@@ -1,6 +1,7 @@
 #ifndef GUARD_ALLOC_H
 #define GUARD_ALLOC_H
 
+#include "gba/types.h"
 
 #define FREE_AND_SET_NULL(ptr)          \
 {                                       \

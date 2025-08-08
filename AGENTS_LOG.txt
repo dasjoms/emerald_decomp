@@ -12,3 +12,4 @@
 - Implemented SDL-backed input polling and 60 FPS timer, integrated SDL initialization/shutdown in the platform layer, added SDL2 build flags and DPAD constants, and adjusted strings header to coexist with system includes.
 - Added an SDL-based video subsystem that opens a 240×160 window, manages an ARGB framebuffer, applies backdrop colors, and blits frames each iteration.
 - Implemented SDL audio backend that feeds m4a’s PCM buffer to the host device, added `SOUND_INFO_PTR` shim, and wrapped hardware-specific portions of `m4a.c` for safe desktop builds.
+- Included 'gba/types.h' in custom malloc header to prevent system <malloc.h> collisions during PC builds.
