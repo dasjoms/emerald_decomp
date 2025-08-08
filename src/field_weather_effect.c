@@ -13,10 +13,55 @@
 #include "task.h"
 #include "trig.h"
 #include "gpu_regs.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 EWRAM_DATA static u8 sCurrentAbnormalWeather = 0;
 EWRAM_DATA static u16 sUnusedWeatherRelated = 0;
 
+#ifdef PLATFORM_PC
+
+static const u16 *LoadCloudsWeatherPalette(void)
+{
+    static const u16 *pal;
+    if (!pal)
+        pal = AssetsGetPNGPalette("graphics/weather/cloud.png", NULL);
+    return pal;
+}
+
+static const u16 *LoadSandstormWeatherPalette(void)
+{
+    static const u16 *pal;
+    if (!pal)
+        pal = AssetsGetPNGPalette("graphics/weather/sandstorm.png", NULL);
+    return pal;
+}
+
+static const u8 *LoadWeatherCloudTiles(size_t *size)
+{
+    static const u8 *tiles;
+    static size_t tilesSize;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/weather/cloud.png", NULL, &tilesSize);
+    if (size)
+        *size = tilesSize;
+    return tiles;
+}
+
+#define gCloudsWeatherPalette (LoadCloudsWeatherPalette())
+#define gSandstormWeatherPalette (LoadSandstormWeatherPalette())
+#define gWeatherCloudTiles (LoadWeatherCloudTiles(NULL))
+
+const u8 gWeatherFogDiagonalTiles[] = {0};
+const u8 gWeatherFogHorizontalTiles[] = {0};
+const u8 gWeatherSnow1Tiles[] = {0};
+const u8 gWeatherSnow2Tiles[] = {0};
+const u8 gWeatherBubbleTiles[] = {0};
+const u8 gWeatherAshTiles[] = {0};
+const u8 gWeatherRainTiles[] = {0};
+const u8 gWeatherSandstormTiles[] = {0};
+#else
 const u16 gCloudsWeatherPalette[] = INCBIN_U16("graphics/weather/cloud.gbapal");
 const u16 gSandstormWeatherPalette[] = INCBIN_U16("graphics/weather/sandstorm.gbapal");
 const u8 gWeatherFogDiagonalTiles[] = INCBIN_U8("graphics/weather/fog_diagonal.4bpp");
@@ -28,6 +73,7 @@ const u8 gWeatherBubbleTiles[] = INCBIN_U8("graphics/weather/bubble.4bpp");
 const u8 gWeatherAshTiles[] = INCBIN_U8("graphics/weather/ash.4bpp");
 const u8 gWeatherRainTiles[] = INCBIN_U8("graphics/weather/rain.4bpp");
 const u8 gWeatherSandstormTiles[] = INCBIN_U8("graphics/weather/sandstorm.4bpp");
+#endif
 
 //------------------------------------------------------------------------------
 // WEATHER_SUNNY_CLOUDS
@@ -46,12 +92,16 @@ static const struct Coords16 sCloudSpriteMapCoords[] =
     {10, 78},
 };
 
+#ifdef PLATFORM_PC
+static struct SpriteSheet sCloudSpriteSheet;
+#else
 static const struct SpriteSheet sCloudSpriteSheet =
 {
     .data = gWeatherCloudTiles,
     .size = sizeof(gWeatherCloudTiles),
     .tag = GFXTAG_CLOUD
 };
+#endif
 
 static const struct OamData sCloudSpriteOamData =
 {
@@ -179,6 +229,9 @@ static void CreateCloudSprites(void)
     if (gWeatherPtr->cloudSpritesCreated == TRUE)
         return;
 
+#ifdef PLATFORM_PC
+    sCloudSpriteSheet.data = LoadWeatherCloudTiles(&sCloudSpriteSheet.size);
+#endif
     LoadSpriteSheet(&sCloudSpriteSheet);
     LoadCustomWeatherSpritePalette(gCloudsWeatherPalette);
     for (i = 0; i < NUM_CLOUD_SPRITES; i++)
