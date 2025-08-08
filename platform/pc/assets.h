@@ -18,6 +18,11 @@ SDL_Surface *AssetsLoadPNG(const char *path);
 // The returned buffer is cached and owned by the asset system.
 u16 *AssetsLoadPal(const char *path, size_t *size);
 
+// Retrieve the palette associated with a previously loaded PNG. If the PNG
+// contains an embedded palette it will be returned as an array of RGB555
+// colours. The returned buffer is cached and owned by the asset system.
+u16 *AssetsGetPNGPalette(const char *path, size_t *size);
+
 // Load a paletted PNG and convert it to 4bpp tile data using the given
 // palette. The returned buffer is cached and owned by the asset system.
 u8 *AssetsLoad4bpp(const char *pngPath, const char *palPath, size_t *size);

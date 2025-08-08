@@ -17,6 +17,8 @@ typedef struct PngCacheEntry
 {
     char *path;
     SDL_Surface *surface;
+    u16 *pal;
+    size_t palCount;
     struct PngCacheEntry *next;
 } PngCacheEntry;
 
@@ -119,24 +121,75 @@ SDL_Surface *AssetsLoadPNG(const char *path)
     if (!surf)
         return NULL;
 
+    u16 *pal = NULL;
+    size_t palCount = 0;
+    if (surf->format && surf->format->palette)
+    {
+        SDL_Palette *p = surf->format->palette;
+        palCount = p->ncolors;
+        pal = malloc(palCount * sizeof(u16));
+        if (pal)
+        {
+            for (size_t i = 0; i < palCount; i++)
+            {
+                SDL_Color c = p->colors[i];
+                pal[i] = (c.r >> 3) | ((c.g >> 3) << 5) | ((c.b >> 3) << 10);
+            }
+        }
+    }
+
     SDL_Surface *converted = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_ARGB8888, 0);
     SDL_FreeSurface(surf);
     if (!converted)
+    {
+        free(pal);
         return NULL;
+    }
 
     PngCacheEntry *entry = malloc(sizeof(*entry));
     if (!entry)
     {
+        free(pal);
         SDL_FreeSurface(converted);
         return NULL;
     }
 
     entry->path = SDL_strdup(path);
     entry->surface = converted;
+    entry->pal = pal;
+    entry->palCount = palCount;
     entry->next = sPngCache;
     sPngCache = entry;
 
     return converted;
+}
+
+u16 *AssetsGetPNGPalette(const char *path, size_t *size)
+{
+    for (PngCacheEntry *e = sPngCache; e != NULL; e = e->next)
+    {
+        if (strcmp(e->path, path) == 0)
+        {
+            if (size)
+                *size = e->palCount * sizeof(u16);
+            return e->pal;
+        }
+    }
+
+    if (!AssetsLoadPNG(path))
+        return NULL;
+
+    for (PngCacheEntry *e = sPngCache; e != NULL; e = e->next)
+    {
+        if (strcmp(e->path, path) == 0)
+        {
+            if (size)
+                *size = e->palCount * sizeof(u16);
+            return e->pal;
+        }
+    }
+
+    return NULL;
 }
 
 u16 *AssetsLoadPal(const char *path, size_t *size)
@@ -267,6 +320,8 @@ u8 *AssetsLoad4bpp(const char *pngPath, const char *palPath, size_t *size)
     SDL_Surface *surf = AssetsLoadPNG(pngPath);
     size_t palSize = 0;
     u16 *pal = palPath ? AssetsLoadPal(palPath, &palSize) : NULL;
+    if (!pal)
+        pal = AssetsGetPNGPalette(pngPath, &palSize);
     if (!surf || !pal)
     {
         SDL_free(key);
