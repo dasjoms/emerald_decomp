@@ -27,3 +27,4 @@
 - Began migrating weather assets to runtime loading by pulling the cloud palette and tiles from PNGs, extracting the sandstorm palette, and preparing the cloud sprite sheet for PC builds; remaining weather graphics still use placeholders.
 - Completed weather asset migration by loading the fog palette from file, replacing all remaining weather tile INCBINs (fog, snow, bubbles, ash, rain, sandstorm) with PNG-based runtime loading and dynamic sprite sheets, and updating battle animations to use the new data.
 - Migrated Pokédex cry screen assets to runtime loading, decoding PNG graphics and palettes for the cry meter needle, meter, and background, removing the remaining INCBIN data.
+- Converted list menu interface assets (scroll arrows and red cursors) to runtime-loaded PNG graphics and palettes, eliminating their INCBIN data and leveraging the shared red UI palette.
