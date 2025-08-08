@@ -17,4 +17,8 @@
 
 #define ALIGNED(n) __attribute__((aligned(n)))
 
+struct SoundInfo;
+extern struct SoundInfo *gSoundInfoPtr;
+#define SOUND_INFO_PTR gSoundInfoPtr
+
 #endif // PC_GBA_DEFINES_H
