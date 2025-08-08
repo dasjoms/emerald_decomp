@@ -1,0 +1,3 @@
+- Added `PLATFORM` make variable with PC option, enabling `-DPLATFORM_PC` and host toolchain selection for desktop builds.
+- Created initial PC platform layer under `platform/pc` with entry point and stub modules for video, audio, input, timer, and filesystem.
+- Implemented placeholder `PlatformInit`, `PlatformRunFrame`, and `PlatformShutdown` functions to orchestrate subsystem stubs.
