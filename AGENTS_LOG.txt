@@ -14,3 +14,4 @@
 - Implemented SDL audio backend that feeds m4a’s PCM buffer to the host device, added `SOUND_INFO_PTR` shim, and wrapped hardware-specific portions of `m4a.c` for safe desktop builds.
 - Included 'gba/types.h' in custom malloc header to prevent system <malloc.h> collisions during PC builds.
 - Added PC Makefile support for m4a tables, introduced stubbed GameLoop and m4a engine placeholders so the desktop build links successfully; full audio and game logic remain TODO.
+- Corrected SYM rule indentation in Makefile, restored placeholder map_groups.h, installed SDL2 dependencies, and verified PC build links to /tmp/pokeemerald.exe.
