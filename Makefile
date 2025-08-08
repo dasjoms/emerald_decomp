@@ -5,6 +5,10 @@ MAKER_CODE  := 01
 REVISION    := 0
 MODERN      ?= 0
 KEEP_TEMPS  ?= 0
+PLATFORM    ?= gba
+ifeq ($(PLATFORM),pc)
+  CFLAGS += -DPLATFORM_PC
+endif
 
 # `File name`.gba ('_modern' will be appended to the modern builds)
 FILE_NAME := pokeemerald
@@ -26,24 +30,32 @@ endif
 all: rom
 
 # Toolchain selection
-TOOLCHAIN := $(DEVKITARM)
-# don't use dkP's base_tools anymore
-# because the redefinition of $(CC) conflicts
-# with when we want to use $(CC) to preprocess files
-# thus, manually create the variables for the bin
-# files, or use arm-none-eabi binaries on the system
-# if dkP is not installed on this system
-ifneq (,$(TOOLCHAIN))
-  ifneq ($(wildcard $(TOOLCHAIN)/bin),)
-    export PATH := $(TOOLCHAIN)/bin:$(PATH)
+ifeq ($(PLATFORM),pc)
+  CC := cc
+  LD := cc
+  AS := as
+  OBJCOPY := objcopy
+  OBJDUMP := objdump
+else
+  TOOLCHAIN := $(DEVKITARM)
+  # don't use dkP's base_tools anymore
+  # because the redefinition of $(CC) conflicts
+  # with when we want to use $(CC) to preprocess files
+  # thus, manually create the variables for the bin
+  # files, or use arm-none-eabi binaries on the system
+  # if dkP is not installed on this system
+  ifneq (,$(TOOLCHAIN))
+    ifneq ($(wildcard $(TOOLCHAIN)/bin),)
+      export PATH := $(TOOLCHAIN)/bin:$(PATH)
+    endif
   endif
-endif
 
-PREFIX := arm-none-eabi-
-OBJCOPY := $(PREFIX)objcopy
-OBJDUMP := $(PREFIX)objdump
-AS := $(PREFIX)as
-LD := $(PREFIX)ld
+  PREFIX := arm-none-eabi-
+  OBJCOPY := $(PREFIX)objcopy
+  OBJDUMP := $(PREFIX)objdump
+  AS := $(PREFIX)as
+  LD := $(PREFIX)ld
+endif
 
 EXE :=
 ifeq ($(OS),Windows_NT)
@@ -57,14 +69,18 @@ endif
 # we can't unconditionally use arm-none-eabi-cpp
 # as installations which install binutils-arm-none-eabi
 # don't come with it
-ifneq ($(MODERN),1)
-  ifeq ($(shell uname -s),Darwin)
-    CPP := $(PREFIX)cpp
-  else
-    CPP := $(CC) -E
-  endif
+ifeq ($(PLATFORM),pc)
+  CPP := $(CC) -E
 else
-  CPP := $(PREFIX)cpp
+  ifneq ($(MODERN),1)
+    ifeq ($(shell uname -s),Darwin)
+      CPP := $(PREFIX)cpp
+    else
+      CPP := $(CC) -E
+    endif
+  else
+    CPP := $(PREFIX)cpp
+  endif
 endif
 
 ROM_NAME := $(FILE_NAME).gba
