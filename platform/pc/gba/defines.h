@@ -21,4 +21,17 @@ struct SoundInfo;
 extern struct SoundInfo *gSoundInfoPtr;
 #define SOUND_INFO_PTR gSoundInfoPtr
 
+// Basic VRAM/Palette constants used by core code. Values are placeholders
+// sufficient for desktop builds and do not map to real hardware addresses.
+#define PLTT          0
+#define BG_PLTT       PLTT
+#define BG_PLTT_SIZE  0x200
+#define OBJ_PLTT      (PLTT + BG_PLTT_SIZE)
+#define OBJ_PLTT_SIZE 0x200
+#define PLTT_SIZE     (BG_PLTT_SIZE + OBJ_PLTT_SIZE)
+#define PLTT_SIZEOF(n) ((n) * sizeof(u16))
+
+#define DISPLAY_WIDTH  240
+#define DISPLAY_HEIGHT 160
+
 #endif // PC_GBA_DEFINES_H

@@ -18,3 +18,4 @@
 - Updated PC make rules to link all objects and emit `pokeemerald.exe` in the repository root, adjusting tests accordingly.
 - Began runtime asset loading by adding `platform/pc/assets.c` and header with file-loading helper, integrated into the PC build; caching and PNG decoding remain TODO.
 - Added basic asset caching and PNG decoding with SDL_image, exposing `AssetsLoadPNG` and initializing SDL_image in the platform layer to progress runtime asset loading.
+- Filled out the PC GBA shim with display and palette constants and replaced one `INCBIN` usage with a lazy loader in `util.c`, beginning actual runtime asset substitution.
