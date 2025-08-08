@@ -24,6 +24,10 @@
 #include "main.h"
 #include "trainer_hill.h"
 #include "constants/rgb.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/platform.h"
+#include "../platform/pc/input.h"
+#endif
 
 static void VBlankIntr(void);
 static void HBlankIntr(void);
@@ -97,13 +101,23 @@ void AgbMain(void)
 #if !MODERN
     RegisterRamReset(RESET_ALL);
 #endif //MODERN
-    *(vu16 *)BG_PLTT = RGB_WHITE; // Set the backdrop to white on startup
     InitGpuRegManager();
+#ifdef PLATFORM_PC
+    PlatformSetBackdropColor(RGB_WHITE);
+    PlatformSetWaitCnt(WAITCNT_PREFETCH_ENABLE | WAITCNT_WS0_S_1 | WAITCNT_WS0_N_3);
+    InitKeys();
+    PlatformInitInterrupts();
+#else
+    *(vu16 *)BG_PLTT = RGB_WHITE; // Set the backdrop to white on startup
     REG_WAITCNT = WAITCNT_PREFETCH_ENABLE | WAITCNT_WS0_S_1 | WAITCNT_WS0_N_3;
     InitKeys();
     InitIntrHandlers();
+#endif
     m4aSoundInit();
+    
+#ifndef PLATFORM_PC
     EnableVCountIntrAtLine150();
+#endif
     InitRFU();
     RtcInit();
     CheckForFlashMemory();
@@ -228,9 +242,11 @@ u16 GetGeneratedTrainerIdLower(void)
 
 void EnableVCountIntrAtLine150(void)
 {
+#ifndef PLATFORM_PC
     u16 gpuReg = (GetGpuReg(REG_OFFSET_DISPSTAT) & 0xFF) | (150 << 8);
     SetGpuReg(REG_OFFSET_DISPSTAT, gpuReg | DISPSTAT_VCOUNT_INTR);
     EnableInterrupts(INTR_FLAG_VCOUNT);
+#endif
 }
 
 // FRLG commented this out to remove RTC, however Emerald didn't undo this!
@@ -257,7 +273,12 @@ void InitKeys(void)
 
 static void ReadKeys(void)
 {
-    u16 keyInput = REG_KEYINPUT ^ KEYS_MASK;
+    u16 keyInput;
+#ifdef PLATFORM_PC
+    keyInput = InputGetKeys();
+#else
+    keyInput = REG_KEYINPUT ^ KEYS_MASK;
+#endif
     gMain.newKeysRaw = keyInput & ~gMain.heldKeysRaw;
     gMain.newKeys = gMain.newKeysRaw;
     gMain.newAndRepeatedKeys = gMain.newKeysRaw;
@@ -308,7 +329,7 @@ void InitIntrHandlers(void)
 
     DmaCopy32(3, IntrMain, IntrMain_Buffer, sizeof(IntrMain_Buffer));
 
-    INTR_VECTOR = IntrMain_Buffer;
+    INTR_VECTOR = (void (*)())IntrMain_Buffer;
 
     SetVBlankCallback(NULL);
     SetHBlankCallback(NULL);
@@ -417,10 +438,14 @@ static void IntrDummy(void)
 
 static void WaitForVBlank(void)
 {
+#ifdef PLATFORM_PC
+    PlatformWaitForVBlank();
+#else
     gMain.intrCheck &= ~INTR_FLAG_VBLANK;
 
     while (!(gMain.intrCheck & INTR_FLAG_VBLANK))
         ;
+#endif
 }
 
 void SetTrainerHillVBlankCounter(u32 *counter)

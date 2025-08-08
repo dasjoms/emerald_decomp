@@ -12,3 +12,8 @@ void VideoUpdate(void)
 void VideoShutdown(void)
 {
 }
+
+void VideoSetBackdropColor(u16 color)
+{
+    (void)color;
+}

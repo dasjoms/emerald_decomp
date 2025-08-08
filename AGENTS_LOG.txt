@@ -5,3 +5,6 @@
 - Updated GBA `AgbMain` to call `GameLoop` and modified PC entry to run it each frame via `PlatformRunFrame`.
 - Added lightweight GBA header shims under platform/pc and updated global.h to use them when building for PC.
 - Created placeholder `map_groups.h` so `global.h` preprocesses successfully for the PC platform.
+- Created abstraction hooks for hardware access: added platform functions for backdrop color, wait state, interrupt setup, and VBlank timing, and updated `src/main.c` to call them with PC stubs.
+- Reordered `global.h` includes and expanded PC GBA shims to expose basic types, registers, and BIOS call declarations, resolving `u8` and other undefined identifier errors during PC builds.
+- Introduced lightweight PC implementations of DMA/CPU helper macros and forward declarations so desktop compilers no longer warn about missing prototypes or pointer truncation when building core sources.
