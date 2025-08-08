@@ -8,3 +8,4 @@
 - Created abstraction hooks for hardware access: added platform functions for backdrop color, wait state, interrupt setup, and VBlank timing, and updated `src/main.c` to call them with PC stubs.
 - Reordered `global.h` includes and expanded PC GBA shims to expose basic types, registers, and BIOS call declarations, resolving `u8` and other undefined identifier errors during PC builds.
 - Introduced lightweight PC implementations of DMA/CPU helper macros and forward declarations so desktop compilers no longer warn about missing prototypes or pointer truncation when building core sources.
+- Added C replacements for BIOS syscalls in `platform/pc/syscalls.c`, covering interrupt waits, memory operations, and LZ77 decompression; wired into the PC build to remove dependence on assembly stubs.
