@@ -16,3 +16,4 @@
 - Added PC Makefile support for m4a tables, introduced stubbed GameLoop and m4a engine placeholders so the desktop build links successfully; full audio and game logic remain TODO.
 - Corrected SYM rule indentation in Makefile, restored placeholder map_groups.h, installed SDL2 dependencies, and verified PC build links to /tmp/pokeemerald.exe.
 - Updated PC make rules to link all objects and emit `pokeemerald.exe` in the repository root, adjusting tests accordingly.
+- Began runtime asset loading by adding `platform/pc/assets.c` and header with file-loading helper, integrated into the PC build; caching and PNG decoding remain TODO.
