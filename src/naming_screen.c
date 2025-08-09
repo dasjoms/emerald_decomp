@@ -30,8 +30,15 @@
 #include "constants/event_objects.h"
 #include "constants/rgb.h"
 #ifdef PLATFORM_PC
+#include <string.h>
 #include "../platform/pc/assets.h"
 static struct SpriteFrameImage sImageTable_PCIcon[2];
+static const u8 *LoadNamingScreenMenuGfx(size_t *size);
+static const u16 *LoadKeyboardPal(size_t *size);
+static const u16 *LoadRivalPal(void);
+static void LoadPCIconGfx(void);
+static void LoadNamingScreenSpriteSheets(void);
+static void LoadNamingScreenSpritePalettes(void);
 #endif
 
 enum {
@@ -200,6 +207,17 @@ static void LoadPCIconGfx(void)
     }
 }
 
+static const u8 *LoadNamingScreenMenuGfx(size_t *size)
+{
+    static const u8 *sGfx;
+    static size_t sSize;
+    if (!sGfx)
+        sGfx = AssetsLoad4bpp("graphics/naming_screen/menu.png", NULL, &sSize);
+    if (size)
+        *size = sSize;
+    return sGfx;
+}
+
 static const u16 *LoadKeyboardPal(size_t *size)
 {
     static const u16 *sPal;
@@ -362,8 +380,13 @@ static const struct SpriteTemplate sSpriteTemplate_InputArrow;
 static const struct SpriteTemplate sSpriteTemplate_Underscore;
 static const struct SpriteTemplate sSpriteTemplate_PCIcon;
 static const u8 *const sNamingScreenKeyboardText[KBPAGE_COUNT][KBROW_COUNT];
+#ifdef PLATFORM_PC
+static struct SpriteSheet sSpriteSheets[];
+static struct SpritePalette sSpritePalettes[];
+#else
 static const struct SpriteSheet sSpriteSheets[];
 static const struct SpritePalette sSpritePalettes[];
+#endif
 
 static void CB2_LoadNamingScreen(void);
 static void NamingScreen_Init(void);
@@ -1904,10 +1927,23 @@ static void SaveInputText(void)
 
 static void LoadGfx(void)
 {
+#ifdef PLATFORM_PC
+    {
+        size_t size = 0;
+        const u8 *gfx = LoadNamingScreenMenuGfx(&size);
+        if (gfx)
+            memcpy(sNamingScreen->tileBuffer, gfx, size > sizeof(sNamingScreen->tileBuffer) ? sizeof(sNamingScreen->tileBuffer) : size);
+    }
+#else
     LZ77UnCompWram(gNamingScreenMenu_Gfx, sNamingScreen->tileBuffer);
+#endif
     LoadBgTiles(1, sNamingScreen->tileBuffer, sizeof(sNamingScreen->tileBuffer), 0);
     LoadBgTiles(2, sNamingScreen->tileBuffer, sizeof(sNamingScreen->tileBuffer), 0);
     LoadBgTiles(3, sNamingScreen->tileBuffer, sizeof(sNamingScreen->tileBuffer), 0);
+#ifdef PLATFORM_PC
+    LoadNamingScreenSpriteSheets();
+    LoadNamingScreenSpritePalettes();
+#endif
     LoadSpriteSheets(sSpriteSheets);
     LoadSpritePalettes(sSpritePalettes);
 }
@@ -1920,14 +1956,24 @@ static void CreateHelperTasks(void)
 
 static void LoadPalettes(void)
 {
-    LoadPalette(gNamingScreenMenu_Pal, BG_PLTT_ID(0), sizeof(gNamingScreenMenu_Pal));
 #ifdef PLATFORM_PC
+    const char *paths[6] = {
+        "graphics/naming_screen/menu.pal",
+        "graphics/naming_screen/page_swap_upper.pal",
+        "graphics/naming_screen/page_swap_lower.pal",
+        "graphics/naming_screen/page_swap_others.pal",
+        "graphics/naming_screen/buttons.pal",
+        "graphics/naming_screen/cursor.pal",
+    };
+    for (int i = 0; i < 6; i++)
+        LoadPalette(AssetsLoadPal(paths[i], NULL), BG_PLTT_ID(i), PLTT_SIZE_4BPP);
     {
         size_t size;
         const u16 *pal = LoadKeyboardPal(&size);
         LoadPalette(pal, BG_PLTT_ID(10), size);
     }
 #else
+    LoadPalette(gNamingScreenMenu_Pal, BG_PLTT_ID(0), sizeof(gNamingScreenMenu_Pal));
     LoadPalette(sKeyboard_Pal, BG_PLTT_ID(10), sizeof(sKeyboard_Pal));
 #endif
     LoadPalette(GetTextWindowPalette(2), BG_PLTT_ID(11), PLTT_SIZE_4BPP);
@@ -2605,6 +2651,37 @@ static const u8 *const sNamingScreenKeyboardText[KBPAGE_COUNT][KBROW_COUNT] =
     },
 };
 
+#ifdef PLATFORM_PC
+static struct SpriteSheet sSpriteSheets[] =
+{
+    {NULL, 0x1E0,  GFXTAG_BACK_BUTTON},
+    {NULL, 0x1E0,  GFXTAG_OK_BUTTON},
+    {NULL, 0x280,  GFXTAG_PAGE_SWAP_FRAME},
+    {NULL, 0x100,  GFXTAG_PAGE_SWAP_BUTTON},
+    {NULL, 0x060,  GFXTAG_PAGE_SWAP_UPPER},
+    {NULL, 0x060,  GFXTAG_PAGE_SWAP_LOWER},
+    {NULL, 0x060,  GFXTAG_PAGE_SWAP_OTHERS},
+    {NULL, 0x080,  GFXTAG_CURSOR},
+    {NULL, 0x080,  GFXTAG_CURSOR_SQUISHED},
+    {NULL, 0x080,  GFXTAG_CURSOR_FILLED},
+    {NULL, 0x020,  GFXTAG_INPUT_ARROW},
+    {NULL, 0x020,  GFXTAG_UNDERSCORE},
+    {}
+};
+
+static struct SpritePalette sSpritePalettes[] =
+{
+    {NULL, PALTAG_MENU},
+    {NULL, PALTAG_PAGE_SWAP_UPPER},
+    {NULL, PALTAG_PAGE_SWAP_LOWER},
+    {NULL, PALTAG_PAGE_SWAP_OTHERS},
+    {NULL, PALTAG_PAGE_SWAP},
+    {NULL, PALTAG_CURSOR},
+    {NULL, PALTAG_BACK_BUTTON},
+    {NULL, PALTAG_OK_BUTTON},
+    {}
+}; 
+#else
 static const struct SpriteSheet sSpriteSheets[] =
 {
     {gNamingScreenBackButton_Gfx,     0x1E0,  GFXTAG_BACK_BUTTON},
@@ -2634,5 +2711,55 @@ static const struct SpritePalette sSpritePalettes[] =
     {gNamingScreenMenu_Pal[4], PALTAG_OK_BUTTON},
     {}
 };
+#endif
+
+#ifdef PLATFORM_PC
+static void LoadNamingScreenSpriteSheets(void)
+{
+    if (!sSpriteSheets[0].data)
+    {
+        size_t size;
+        sSpriteSheets[0].data = AssetsLoad4bpp("graphics/naming_screen/back_button.png", NULL, &size);
+        sSpriteSheets[0].size = (u16)size;
+        sSpriteSheets[1].data = AssetsLoad4bpp("graphics/naming_screen/ok_button.png", NULL, &size);
+        sSpriteSheets[1].size = (u16)size;
+        sSpriteSheets[2].data = AssetsLoad4bpp("graphics/naming_screen/page_swap_frame.png", NULL, &size);
+        sSpriteSheets[2].size = (u16)size;
+        sSpriteSheets[3].data = AssetsLoad4bpp("graphics/naming_screen/page_swap_button.png", NULL, &size);
+        sSpriteSheets[3].size = (u16)size;
+        sSpriteSheets[4].data = AssetsLoad4bpp("graphics/naming_screen/page_swap_upper.png", NULL, &size);
+        sSpriteSheets[4].size = (u16)size;
+        sSpriteSheets[5].data = AssetsLoad4bpp("graphics/naming_screen/page_swap_lower.png", NULL, &size);
+        sSpriteSheets[5].size = (u16)size;
+        sSpriteSheets[6].data = AssetsLoad4bpp("graphics/naming_screen/page_swap_others.png", NULL, &size);
+        sSpriteSheets[6].size = (u16)size;
+        sSpriteSheets[7].data = AssetsLoad4bpp("graphics/naming_screen/cursor.png", NULL, &size);
+        sSpriteSheets[7].size = (u16)size;
+        sSpriteSheets[8].data = AssetsLoad4bpp("graphics/naming_screen/cursor_squished.png", NULL, &size);
+        sSpriteSheets[8].size = (u16)size;
+        sSpriteSheets[9].data = AssetsLoad4bpp("graphics/naming_screen/cursor_filled.png", NULL, &size);
+        sSpriteSheets[9].size = (u16)size;
+        sSpriteSheets[10].data = AssetsLoad4bpp("graphics/naming_screen/input_arrow.png", NULL, &size);
+        sSpriteSheets[10].size = (u16)size;
+        sSpriteSheets[11].data = AssetsLoad4bpp("graphics/naming_screen/underscore.png", NULL, &size);
+        sSpriteSheets[11].size = (u16)size;
+    }
+}
+
+static void LoadNamingScreenSpritePalettes(void)
+{
+    if (!sSpritePalettes[0].data)
+    {
+        sSpritePalettes[0].data = AssetsLoadPal("graphics/naming_screen/menu.pal", NULL);
+        sSpritePalettes[1].data = AssetsLoadPal("graphics/naming_screen/page_swap_upper.pal", NULL);
+        sSpritePalettes[2].data = AssetsLoadPal("graphics/naming_screen/page_swap_lower.pal", NULL);
+        sSpritePalettes[3].data = AssetsLoadPal("graphics/naming_screen/page_swap_others.pal", NULL);
+        sSpritePalettes[4].data = AssetsLoadPal("graphics/naming_screen/buttons.pal", NULL);
+        sSpritePalettes[5].data = AssetsLoadPal("graphics/naming_screen/cursor.pal", NULL);
+        sSpritePalettes[6].data = sSpritePalettes[4].data;
+        sSpritePalettes[7].data = sSpritePalettes[4].data;
+    }
+}
+#endif
 
 
