@@ -9,6 +9,9 @@
 #include "bg.h"
 #include "gpu_regs.h"
 #include "constants/rgb.h"
+#ifdef PLATFORM_PC
+#include "platform/pc/assets.h"
+#endif
 
 /*
     There are 3 "categories" of Battle Frontier transition
@@ -45,10 +48,72 @@ static bool8 CirclesSymmetricSpiralInSeq_End(struct Task *task);
 
 #define PALTAG_LOGO_CIRCLES 0x2E90
 
+#ifdef PLATFORM_PC
+static const u32 *LoadLogoCenterGfx(size_t *size)
+{
+    static const u32 *sGfx;
+    static size_t sSize;
+    if (!sGfx)
+        sGfx = (const u32 *)AssetsLoad4bpp("graphics/battle_transitions/frontier_logo_center.png", NULL, &sSize);
+    if (size)
+        *size = sSize;
+    return sGfx;
+}
+
+static const u32 *LoadLogoCenterTilemap(size_t *size)
+{
+    static const u32 *sMap;
+    static size_t sSize;
+    if (!sMap)
+        sMap = (const u32 *)AssetsLoadFile("graphics/battle_transitions/frontier_logo_center.bin", &sSize);
+    if (size)
+        *size = sSize;
+    return sMap;
+}
+
+static const u32 *LoadLogoCirclesGfx(size_t *size)
+{
+    static const u32 *sGfx;
+    static size_t sSize;
+    if (!sGfx)
+        sGfx = (const u32 *)AssetsLoad4bpp("graphics/battle_transitions/frontier_logo_circles.png", NULL, &sSize);
+    if (size)
+        *size = sSize;
+    return sGfx;
+}
+
+static const u16 *LoadLogoPalette(size_t *size)
+{
+    static const u16 *sPal;
+    static size_t sSize;
+    if (!sPal)
+        sPal = AssetsGetPNGPalette("graphics/battle_transitions/frontier_logo_circles.png", &sSize);
+    if (size)
+        *size = sSize;
+    return sPal;
+}
+
+static struct SpriteSheet sSpriteSheet_LogoCircles = { NULL, 0x1800, PALTAG_LOGO_CIRCLES };
+static struct SpritePalette sSpritePalette_LogoCircles = { NULL, PALTAG_LOGO_CIRCLES };
+#else
 static const u32 sLogoCenter_Gfx[] = INCBIN_U32("graphics/battle_transitions/frontier_logo_center.4bpp.lz");
 static const u32 sLogoCenter_Tilemap[] = INCBIN_U32("graphics/battle_transitions/frontier_logo_center.bin.lz");
 static const u32 sLogoCircles_Gfx[] = INCBIN_U32("graphics/battle_transitions/frontier_logo_circles.4bpp.lz");
 static const u16 sLogo_Pal[] = INCBIN_U16("graphics/battle_transitions/frontier_logo_circles.gbapal");
+
+static const struct CompressedSpriteSheet sSpriteSheet_LogoCircles =
+{
+    .data = sLogoCircles_Gfx,
+    .size = 0x1800,
+    .tag = PALTAG_LOGO_CIRCLES
+};
+
+static const struct SpritePalette sSpritePalette_LogoCircles =
+{
+    .data = sLogo_Pal,
+    .tag = PALTAG_LOGO_CIRCLES
+};
+#endif
 
 // Unused Empty data.
 static const u8 sFiller[0x1C0] = {0};
@@ -68,19 +133,6 @@ static const struct OamData sOamData_LogoCircles =
     .priority = 1,
     .paletteNum = 0,
     .affineParam = 0
-};
-
-static const struct CompressedSpriteSheet sSpriteSheet_LogoCircles =
-{
-    .data = sLogoCircles_Gfx,
-    .size = 0x1800,
-    .tag = PALTAG_LOGO_CIRCLES
-};
-
-static const struct SpritePalette sSpritePalette_LogoCircles =
-{
-    .data = sLogo_Pal,
-    .tag = PALTAG_LOGO_CIRCLES
 };
 
 static const union AnimCmd sAnim_LogoCircle_Top[] =
@@ -224,11 +276,29 @@ static void LoadLogoGfx(void)
     u16 *tilemap, *tileset;
 
     GetBg0TilesDst(&tilemap, &tileset);
+#ifdef PLATFORM_PC
+    size_t size;
+    const u32 *gfx = LoadLogoCenterGfx(&size);
+    if (gfx)
+        CpuFastSet(gfx, tileset, size / 4);
+    const u32 *map = LoadLogoCenterTilemap(&size);
+    if (map)
+        CpuFastSet(map, tilemap, size / 4);
+    const u16 *pal = LoadLogoPalette(&size);
+    if (pal)
+        LoadPalette(pal, BG_PLTT_ID(15), size);
+    sSpriteSheet_LogoCircles.data = LoadLogoCirclesGfx(&size);
+    sSpriteSheet_LogoCircles.size = (u16)size;
+    sSpritePalette_LogoCircles.data = pal;
+    LoadSpriteSheet(&sSpriteSheet_LogoCircles);
+    LoadSpritePalette(&sSpritePalette_LogoCircles);
+#else
     LZ77UnCompVram(sLogoCenter_Gfx, tileset);
     LZ77UnCompVram(sLogoCenter_Tilemap, tilemap);
     LoadPalette(sLogo_Pal, BG_PLTT_ID(15), sizeof(sLogo_Pal));
     LoadCompressedSpriteSheet(&sSpriteSheet_LogoCircles);
     LoadSpritePalette(&sSpritePalette_LogoCircles);
+#endif
 }
 
 static u8 CreateSlidingLogoCircleSprite(s16 x, s16 y, u8 delayX, u8 delayY, s8 speedX, s8 speedY, u8 spriteAnimNum)
