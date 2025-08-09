@@ -12,6 +12,9 @@
 #include "gpu_regs.h"
 #include "menu.h"
 #include "dma3.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 struct Pokenav_MainMenu
 {
@@ -52,10 +55,35 @@ static u32 LoopedTask_SlideMenuHeaderDown(s32);
 static void DrawHelpBar(u32);
 static void SpriteCB_SpinningPokenav(struct Sprite *);
 static u32 LoopedTask_InitPokenavMenu(s32);
+#ifdef PLATFORM_PC
+static struct SpriteSheet sSpinningPokenavSpriteSheet[] =
+{
+    { NULL, 0, 0 },
+    {},
+};
 
+static struct SpritePalette sSpinningNavgearPalettes[] =
+{
+    { NULL, 0 },
+    {},
+};
+
+static void LoadSpinningPokenavAssets(void)
+{
+    if (!sSpinningPokenavSpriteSheet[0].data)
+    {
+        size_t size = 0;
+        sSpinningPokenavSpriteSheet[0].data = AssetsLoad4bpp("graphics/pokenav/nav_icon.png", NULL, &size);
+        sSpinningPokenavSpriteSheet[0].size = (u16)size;
+    }
+    if (!sSpinningNavgearPalettes[0].data)
+        sSpinningNavgearPalettes[0].data = AssetsGetPNGPalette("graphics/pokenav/nav_icon.png", NULL);
+}
+#else
 static const u16 sSpinningPokenav_Pal[] = INCBIN_U16("graphics/pokenav/nav_icon.gbapal");
 static const u32 sSpinningPokenav_Gfx[] = INCBIN_U32("graphics/pokenav/nav_icon.4bpp.lz");
 static const u32 sBlueLightCopy[] = INCBIN_U32("graphics/pokenav/blue_light.4bpp.lz"); // Unused copy of sMatchCallBlueLightTiles
+#endif
 
 const struct BgTemplate gPokenavMainMenuBgTemplates[] =
 {
@@ -105,6 +133,9 @@ static const u8 sHelpBarTextColors[3] =
     TEXT_COLOR_RED, TEXT_COLOR_WHITE, TEXT_COLOR_DARK_GRAY
 };
 
+#ifdef PLATFORM_PC
+// Definitions for PC builds are provided above and loaded at runtime
+#else
 static const struct CompressedSpriteSheet sSpinningPokenavSpriteSheet[] =
 {
     {
@@ -122,6 +153,7 @@ static const struct SpritePalette sSpinningNavgearPalettes[] =
     },
     {}
 };
+#endif
 
 static const struct CompressedSpriteSheet sMenuLeftHeaderSpriteSheet =
 {
@@ -582,10 +614,14 @@ static void InitPokenavMainMenuResources(void)
     s32 i;
     u8 spriteId;
     struct Pokenav_MainMenu *menu = GetSubstructPtr(POKENAV_SUBSTRUCT_MAIN_MENU);
-
+#ifdef PLATFORM_PC
+    LoadSpinningPokenavAssets();
+    for (i = 0; sSpinningPokenavSpriteSheet[i].data != NULL; i++)
+        LoadSpriteSheet(&sSpinningPokenavSpriteSheet[i]);
+#else
     for (i = 0; i < ARRAY_COUNT(sSpinningPokenavSpriteSheet); i++)
         LoadCompressedSpriteSheet(&sSpinningPokenavSpriteSheet[i]);
-
+#endif
     Pokenav_AllocAndLoadPalettes(sSpinningNavgearPalettes);
     menu->palettes = ~1 & ~(0x10000 << IndexOfSpritePaletteTag(0));
     spriteId = CreateSprite(&sSpinningPokenavSpriteTemplate, 220, 12, 0);

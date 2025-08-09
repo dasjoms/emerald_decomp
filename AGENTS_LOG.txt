@@ -37,3 +37,4 @@
 - Converted Option Menu text palette and equals sign graphic to load from external files at runtime for PC builds, removing INCBIN data from that menu.
 - Converted Save Failed screen clock graphics and palette to load from PNG at runtime for PC builds, eliminating corresponding INCBIN data.
 - Converted battle environment backgrounds to load tilesets, tilemaps, and palettes from external files at runtime on PC builds, removing INCBIN dependencies and enabling dynamic battlefield rendering.
+- Migrated Pokénav main menu spinning icon graphics and palette to load from PNG at runtime for PC builds, eliminating INCBIN data and preparing dynamic sprite sheet usage.
