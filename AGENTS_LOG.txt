@@ -50,3 +50,4 @@
 - Converted Pokénav condition graph and search results screens to load tiles, tilemaps, and palettes from external files at runtime on PC builds, eliminating remaining INCBIN data for those interfaces.
 - Converted naming screen PC icon graphics and keyboard palette to load from external PNG and palette files at runtime on PC builds, removing corresponding INCBIN data.
 - Converted naming screen menu, buttons, cursor, and related sprites to load graphics and palettes from external files at runtime on PC builds, removing remaining INCBIN data for those assets.
+- Converted Pokénav list arrow graphics and palette to load from PNG at runtime on PC builds, eliminating remaining INCBIN data in pokenav_list.c.
