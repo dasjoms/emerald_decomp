@@ -15,6 +15,70 @@
 #include "strings.h"
 #include "text.h"
 
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+
+static const u16 *LoadConditionGraphDataPal(void)
+{
+    static const u16 *pal;
+    if (!pal)
+        pal = AssetsLoadPal("graphics/pokenav/condition/graph_data.pal", NULL);
+    return pal;
+}
+
+static const u16 *LoadConditionTextPal(void)
+{
+    static const u16 *pal;
+    if (!pal)
+        pal = AssetsLoadPal("graphics/pokenav/condition/text.pal", NULL);
+    return pal;
+}
+
+static const u8 *LoadConditionGraphDataGfx(size_t *sizeOut)
+{
+    static const u8 *tiles;
+    static size_t size;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/pokenav/condition/graph_data.png", NULL, &size);
+    if (sizeOut)
+        *sizeOut = size;
+    return tiles;
+}
+
+static const u16 *LoadConditionGraphDataTilemap(size_t *sizeOut)
+{
+    static const u16 *map;
+    static size_t size;
+    if (!map)
+        map = AssetsLoadFile("graphics/pokenav/condition/graph_data.bin", &size);
+    if (sizeOut)
+        *sizeOut = size;
+    return map;
+}
+
+static const u16 *LoadMonMarkingsPal(void)
+{
+    static const u16 *pal;
+    if (!pal)
+        pal = AssetsLoadPal("graphics/pokenav/condition/mon_markings.pal", NULL);
+    return pal;
+}
+
+#define gConditionGraphData_Pal LoadConditionGraphDataPal()
+#define gConditionText_Pal LoadConditionTextPal()
+#define sConditionGraphData_Gfx LoadConditionGraphDataGfx(NULL)
+#define sConditionGraphData_Tilemap LoadConditionGraphDataTilemap(NULL)
+#define sMonMarkings_Pal LoadMonMarkingsPal()
+#else
+
+const u16 gConditionGraphData_Pal[] = INCBIN_U16("graphics/pokenav/condition/graph_data.gbapal");
+const u16 gConditionText_Pal[] = INCBIN_U16("graphics/pokenav/condition/text.gbapal");
+static const u32 sConditionGraphData_Gfx[] = INCBIN_U32("graphics/pokenav/condition/graph_data.4bpp.lz");
+static const u32 sConditionGraphData_Tilemap[] = INCBIN_U32("graphics/pokenav/condition/graph_data.bin.lz");
+static const u16 sMonMarkings_Pal[] = INCBIN_U16("graphics/pokenav/condition/mon_markings.gbapal");
+
+#endif
+
 static u32 LoopedTask_TransitionMons(s32);
 static u32 LoopedTask_ExitConditionGraphMenu(s32);
 static u32 LoopedTask_MoveCursorNoTransition(s32);
@@ -23,12 +87,6 @@ static u32 LoopedTask_OpenMonMarkingsWindow(s32);
 static u32 LoopedTask_CloseMonMarkingsWindow(s32);
 
 static u8 sInitialLoadId; // Never read
-
-const u16 gConditionGraphData_Pal[] = INCBIN_U16("graphics/pokenav/condition/graph_data.gbapal");
-const u16 gConditionText_Pal[] = INCBIN_U16("graphics/pokenav/condition/text.gbapal");
-static const u32 sConditionGraphData_Gfx[] = INCBIN_U32("graphics/pokenav/condition/graph_data.4bpp.lz");
-static const u32 sConditionGraphData_Tilemap[] = INCBIN_U32("graphics/pokenav/condition/graph_data.bin.lz");
-static const u16 sMonMarkings_Pal[] = INCBIN_U16("graphics/pokenav/condition/mon_markings.gbapal");
 
 static const struct BgTemplate sMenuBgTemplates[3] =
 {
@@ -214,7 +272,15 @@ static u32 LoopedTask_OpenConditionGraphMenu(s32 state)
     case 2:
         if (FreeTempTileDataBuffersIfPossible())
             return LT_PAUSE;
+#ifdef PLATFORM_PC
+        {
+            size_t size;
+            const u8 *tiles = LoadConditionGraphDataGfx(&size);
+            LoadBgTiles(2, tiles, size, 0);
+        }
+#else
         DecompressAndCopyTileDataToVram(2, sConditionGraphData_Gfx, 0, 0, 0);
+#endif
         return LT_INC_AND_PAUSE;
     case 3:
          if (FreeTempTileDataBuffersIfPossible())
@@ -233,12 +299,22 @@ static u32 LoopedTask_OpenConditionGraphMenu(s32 state)
     case 4:
         if (FreeTempTileDataBuffersIfPossible())
             return LT_PAUSE;
-
+#ifdef PLATFORM_PC
+        {
+            const u16 *map = LoadConditionGraphDataTilemap(NULL);
+            SetBgTilemapBuffer(2, menu->tilemapBuffers[2]);
+            CopyToBgTilemapBuffer(2, map, 0, 0);
+            CopyBgTilemapBufferToVram(2);
+            CopyPaletteIntoBufferUnfaded(gConditionGraphData_Pal, BG_PLTT_ID(3), PLTT_SIZE_4BPP);
+            ConditionGraph_InitWindow(2);
+        }
+#else
         LZ77UnCompVram(sConditionGraphData_Tilemap, menu->tilemapBuffers[2]);
         SetBgTilemapBuffer(2, menu->tilemapBuffers[2]);
         CopyBgTilemapBufferToVram(2);
         CopyPaletteIntoBufferUnfaded(gConditionGraphData_Pal, BG_PLTT_ID(3), PLTT_SIZE_4BPP);
         ConditionGraph_InitWindow(2);
+#endif
         return LT_INC_AND_PAUSE;
     case 5:
         BgDmaFill(1, 0, 0, 1);

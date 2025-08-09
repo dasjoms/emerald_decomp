@@ -77,10 +77,58 @@ static const LoopedTask sConditionSearchLoopedTaskFuncs[] =
     ConvertConditionsToListRanks
 };
 
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+
+static const u16 *LoadConditionSearchResultFramePal(size_t *size)
+{
+    static const u16 *pal;
+    static size_t palSize;
+    if (!pal)
+        pal = AssetsGetPNGPalette("graphics/pokenav/condition/search_results.png", &palSize);
+    if (size)
+        *size = palSize;
+    return pal;
+}
+
+static const u8 *LoadConditionSearchResultTiles(size_t *size)
+{
+    static const u8 *tiles;
+    static size_t tilesSize;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/pokenav/condition/search_results.png", NULL, &tilesSize);
+    if (size)
+        *size = tilesSize;
+    return tiles;
+}
+
+static const u16 *LoadConditionSearchResultTilemap(size_t *size)
+{
+    static const u16 *map;
+    static size_t mapSize;
+    if (!map)
+        map = AssetsLoadFile("graphics/pokenav/condition/search_results.bin", &mapSize);
+    if (size)
+        *size = mapSize;
+    return map;
+}
+
+static const u16 *LoadListBgPal(size_t *size)
+{
+    static const u16 *pal;
+    static size_t palSize;
+    if (!pal)
+        pal = AssetsLoadPal("graphics/pokenav/condition/search_results_list.pal", &palSize);
+    if (size)
+        *size = palSize;
+    return pal;
+}
+#else
 static const u16 sConditionSearchResultFramePal[] = INCBIN_U16("graphics/pokenav/condition/search_results.gbapal");
 static const u32 sConditionSearchResultTiles[] = INCBIN_U32("graphics/pokenav/condition/search_results.4bpp.lz");
 static const u32 sConditionSearchResultTilemap[] = INCBIN_U32("graphics/pokenav/condition/search_results.bin.lz");
 static const u16 sListBg_Pal[] = INCBIN_U16("graphics/pokenav/condition/search_results_list.gbapal");
+#endif
 
 static const struct BgTemplate sConditionSearchResultBgTemplates[] =
 {
@@ -438,12 +486,27 @@ static u32 LoopedTask_OpenConditionSearchResults(s32 state)
     {
     case 0:
         InitBgTemplates(sConditionSearchResultBgTemplates, ARRAY_COUNT(sConditionSearchResultBgTemplates));
+#ifdef PLATFORM_PC
+        {
+            size_t size;
+            const u8 *tiles = LoadConditionSearchResultTiles(&size);
+            LoadBgTiles(1, tiles, size, 0);
+            SetBgTilemapBuffer(1, gfx->buff);
+            const u16 *map = LoadConditionSearchResultTilemap(NULL);
+            CopyToBgTilemapBuffer(1, map, 0, 0);
+            CopyBgTilemapBufferToVram(1);
+            const u16 *pal = LoadConditionSearchResultFramePal(&size);
+            CopyPaletteIntoBufferUnfaded(pal, BG_PLTT_ID(1), size);
+            CopyBgTilemapBufferToVram(1);
+        }
+#else
         DecompressAndCopyTileDataToVram(1, sConditionSearchResultTiles, 0, 0, 0);
         SetBgTilemapBuffer(1, gfx->buff);
         CopyToBgTilemapBuffer(1, sConditionSearchResultTilemap, 0, 0);
         CopyBgTilemapBufferToVram(1);
         CopyPaletteIntoBufferUnfaded(sConditionSearchResultFramePal, BG_PLTT_ID(1), sizeof(sConditionSearchResultFramePal));
         CopyBgTilemapBufferToVram(1);
+#endif
         return LT_INC_AND_PAUSE;
     case 1:
         if (FreeTempTileDataBuffersIfPossible())
@@ -454,7 +517,15 @@ static u32 LoopedTask_OpenConditionSearchResults(s32 state)
     case 2:
         if (FreeTempTileDataBuffersIfPossible())
             return LT_PAUSE;
+#ifdef PLATFORM_PC
+        {
+            size_t size;
+            const u16 *pal = LoadListBgPal(&size);
+            CopyPaletteIntoBufferUnfaded(pal, BG_PLTT_ID(2), size);
+        }
+#else
         CopyPaletteIntoBufferUnfaded(sListBg_Pal, BG_PLTT_ID(2), sizeof(sListBg_Pal));
+#endif
         CreateSearchResultsList();
         return LT_INC_AND_PAUSE;
     case 3:
