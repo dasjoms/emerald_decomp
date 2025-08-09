@@ -57,3 +57,4 @@
 - Converted map name popup themes to load tiles, outlines, and palettes from external PNG and PAL files at runtime on PC builds, removing INCBIN dependencies in map_name_popup.c.
 - Converted rotating gate puzzle graphics to load gate tiles from PNG at runtime on PC builds, eliminating INCBIN data in rotating_gate.c.
 - Converted diploma screen assets to load tiles, tilemap, and palettes from external files at runtime on PC builds, removing INCBIN usage in diploma.c.
+- Migrated Wonder Card and Wonder News interfaces to load backgrounds, tilemaps, palettes, and stamp graphics from external files at runtime on PC builds, eliminating INCBIN data in mystery_gift_view.c.
