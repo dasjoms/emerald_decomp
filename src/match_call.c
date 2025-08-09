@@ -32,6 +32,9 @@
 #include "constants/region_map_sections.h"
 #include "constants/songs.h"
 #include "constants/trainers.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 // In this file only the values normally associated with Battle Pike and Factory are swapped.
 // Note that this is *not* a bug, because they are properly swapped consistently in this file.
@@ -1194,10 +1197,56 @@ static void StartMatchCall(void)
     CreateTask(ExecuteMatchCall, 1);
 }
 
+#ifdef PLATFORM_PC
+static const u16 *LoadMatchCallWindowPal(size_t *size)
+{
+    static const u16 *sPal;
+    static size_t sSize;
+    if (!sPal)
+        sPal = AssetsLoadPal("graphics/pokenav/match_call/call_window.pal", &sSize);
+    if (size)
+        *size = sSize;
+    return sPal;
+}
+
+static const u8 *LoadMatchCallWindowTiles(size_t *size)
+{
+    static const u8 *sTiles;
+    static size_t sSize;
+    if (!sTiles)
+        sTiles = AssetsLoad4bpp("graphics/pokenav/match_call/window.png", "graphics/pokenav/match_call/call_window.pal", &sSize);
+    if (size)
+        *size = sSize;
+    return sTiles;
+}
+
+static const u16 *LoadPokenavIconPal(size_t *size)
+{
+    static const u16 *sPal;
+    static size_t sSize;
+    if (!sPal)
+        sPal = AssetsGetPNGPalette("graphics/pokenav/match_call/nav_icon.png", &sSize);
+    if (size)
+        *size = sSize;
+    return sPal;
+}
+
+static const u8 *LoadPokenavIconGfx(size_t *size)
+{
+    static const u8 *sGfx;
+    static size_t sSize;
+    if (!sGfx)
+        sGfx = AssetsLoad4bpp("graphics/pokenav/match_call/nav_icon.png", NULL, &sSize);
+    if (size)
+        *size = sSize;
+    return sGfx;
+}
+#else
 static const u16 sMatchCallWindow_Pal[] = INCBIN_U16("graphics/pokenav/match_call/window.gbapal");
 static const u8 sMatchCallWindow_Gfx[] = INCBIN_U8("graphics/pokenav/match_call/window.4bpp");
 static const u16 sPokenavIcon_Pal[] = INCBIN_U16("graphics/pokenav/match_call/nav_icon.gbapal");
 static const u32 sPokenavIcon_Gfx[] = INCBIN_U32("graphics/pokenav/match_call/nav_icon.4bpp.lz");
+#endif
 
 static const u8 sText_PokenavCallEllipsis[] = _("………………\p");
 
@@ -1252,7 +1301,30 @@ static bool32 MatchCall_LoadGfx(u8 taskId)
         DestroyTask(taskId);
         return FALSE;
     }
+#ifdef PLATFORM_PC
+    size_t size;
+    const u8 *tiles = LoadMatchCallWindowTiles(&size);
+    if (LoadBgTiles(0, tiles, size, TILE_MC_WINDOW) == 0xFFFF)
+    {
+        RemoveWindow(tWindowId);
+        DestroyTask(taskId);
+        return FALSE;
+    }
 
+    const u8 *iconGfx = LoadPokenavIconGfx(&size);
+    if (LoadBgTiles(0, iconGfx, size, TILE_POKENAV_ICON) == 0xFFFF)
+    {
+        RemoveWindow(tWindowId);
+        DestroyTask(taskId);
+        return FALSE;
+    }
+
+    FillWindowPixelBuffer(tWindowId, PIXEL_FILL(8));
+    const u16 *pal = LoadMatchCallWindowPal(&size);
+    LoadPalette(pal, BG_PLTT_ID(14), size);
+    pal = LoadPokenavIconPal(&size);
+    LoadPalette(pal, BG_PLTT_ID(15), size);
+#else
     if (LoadBgTiles(0, sMatchCallWindow_Gfx, sizeof(sMatchCallWindow_Gfx), TILE_MC_WINDOW) == 0xFFFF)
     {
         RemoveWindow(tWindowId);
@@ -1270,6 +1342,7 @@ static bool32 MatchCall_LoadGfx(u8 taskId)
     FillWindowPixelBuffer(tWindowId, PIXEL_FILL(8));
     LoadPalette(sMatchCallWindow_Pal, BG_PLTT_ID(14), sizeof(sMatchCallWindow_Pal));
     LoadPalette(sPokenavIcon_Pal, BG_PLTT_ID(15), sizeof(sPokenavIcon_Pal));
+#endif
     ChangeBgY(0, -0x2000, BG_COORD_SET);
     return TRUE;
 }
@@ -2102,8 +2175,16 @@ void BufferPokedexRatingForMatchCall(u8 *destStr)
 void LoadMatchCallWindowGfx(u32 windowId, u32 destOffset, u32 paletteId)
 {
     u8 bg = GetWindowAttribute(windowId, WINDOW_BG);
+#ifdef PLATFORM_PC
+    size_t size, palSize;
+    const u8 *tiles = LoadMatchCallWindowTiles(&size);
+    LoadBgTiles(bg, tiles, size, destOffset);
+    const u16 *pal = LoadMatchCallWindowPal(&palSize);
+    LoadPalette(pal, BG_PLTT_ID(paletteId), palSize);
+#else
     LoadBgTiles(bg, sMatchCallWindow_Gfx, 0x100, destOffset);
     LoadPalette(sMatchCallWindow_Pal, BG_PLTT_ID(paletteId), sizeof(sMatchCallWindow_Pal));
+#endif
 }
 
 void DrawMatchCallTextBoxBorder(u32 windowId, u32 tileOffset, u32 paletteId)
