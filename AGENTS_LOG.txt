@@ -49,3 +49,4 @@
 - Converted remaining Pokénav Match Call interface assets to load tiles, tilemaps, and palettes from external PNGs at runtime on PC builds, removing INCBIN references for the UI, cursor, windows, and Pokéball icons.
 - Converted Pokénav condition graph and search results screens to load tiles, tilemaps, and palettes from external files at runtime on PC builds, eliminating remaining INCBIN data for those interfaces.
 - Converted naming screen PC icon graphics and keyboard palette to load from external PNG and palette files at runtime on PC builds, removing corresponding INCBIN data.
+- Converted naming screen menu, buttons, cursor, and related sprites to load graphics and palettes from external files at runtime on PC builds, removing remaining INCBIN data for those assets.
