@@ -24,6 +24,9 @@
 #include "task.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 /*
  * Move relearner state machine
@@ -181,11 +184,32 @@ static EWRAM_DATA struct {
     bool8 showContestInfo;
 } sMoveRelearnerMenuState = {0};
 
+#ifdef PLATFORM_PC
+static const u16 *LoadMoveRelearnerUIPal(void)
+{
+    static const u16 *sPal;
+    if (!sPal)
+        sPal = AssetsGetPNGPalette("graphics/interface/ui_learn_move.png", NULL);
+    return sPal;
+}
+
+static const u8 *LoadMoveRelearnerUITiles(size_t *size)
+{
+    static const u8 *sGfx;
+    static size_t sSize;
+    if (!sGfx)
+        sGfx = AssetsLoad4bpp("graphics/interface/ui_learn_move.png", NULL, &sSize);
+    if (size)
+        *size = sSize;
+    return sGfx;
+}
+#else
 static const u16 sUI_Pal[] = INCBIN_U16("graphics/interface/ui_learn_move.gbapal");
 
 // The arrow sprites in this spritesheet aren't used. The scroll-arrow system provides its own
 // arrow sprites.
 static const u8 sUI_Tiles[] = INCBIN_U8("graphics/interface/ui_learn_move.4bpp");
+#endif
 
 static const struct OamData sHeartSpriteOamData =
 {
@@ -238,6 +262,21 @@ static const struct OamData sUnusedOam2 =
     .affineParam = 0,
 };
 
+#ifdef PLATFORM_PC
+static struct SpriteSheet sMoveRelearnerSpriteSheet;
+static struct SpritePalette sMoveRelearnerPalette;
+
+static void LoadMoveRelearnerUIAssets(void)
+{
+    size_t size;
+    sMoveRelearnerSpriteSheet.data = LoadMoveRelearnerUITiles(&size);
+    sMoveRelearnerSpriteSheet.size = size;
+    sMoveRelearnerSpriteSheet.tag = GFXTAG_UI;
+
+    sMoveRelearnerPalette.data = LoadMoveRelearnerUIPal();
+    sMoveRelearnerPalette.tag = PALTAG_UI;
+}
+#else
 static const struct SpriteSheet sMoveRelearnerSpriteSheet =
 {
     .data = sUI_Tiles,
@@ -250,6 +289,7 @@ static const struct SpritePalette sMoveRelearnerPalette =
     .data = sUI_Pal,
     .tag = PALTAG_UI
 };
+#endif
 
 static const struct ScrollArrowsTemplate sDisplayModeArrowsTemplate =
 {
@@ -407,6 +447,9 @@ static void CB2_InitLearnMove(void)
 
     CreateLearnableMovesList();
 
+    #ifdef PLATFORM_PC
+    LoadMoveRelearnerUIAssets();
+    #endif
     LoadSpriteSheet(&sMoveRelearnerSpriteSheet);
     LoadSpritePalette(&sMoveRelearnerPalette);
     CreateUISprites();
@@ -432,6 +475,9 @@ static void CB2_InitLearnMoveReturnFromSelectMove(void)
     InitMoveRelearnerWindows(sMoveRelearnerMenuState.showContestInfo);
     CreateLearnableMovesList();
 
+    #ifdef PLATFORM_PC
+    LoadMoveRelearnerUIAssets();
+    #endif
     LoadSpriteSheet(&sMoveRelearnerSpriteSheet);
     LoadSpritePalette(&sMoveRelearnerPalette);
     CreateUISprites();
