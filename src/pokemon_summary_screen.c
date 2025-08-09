@@ -46,6 +46,9 @@
 #include "constants/region_map_sections.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 enum {
     PSS_PAGE_INFO,
@@ -365,7 +368,22 @@ struct TilemapCtrl
     u8 field_8;
     u8 field_9;
 };
+#ifdef PLATFORM_PC
+static struct TilemapCtrl sStatusTilemapCtrl1 = { NULL, 1, 10, 2, 0, 18 };
+static struct TilemapCtrl sStatusTilemapCtrl2 = { NULL, 1, 10, 2, 0, 50 };
 
+static const u16 *LoadStatusTilemap(void)
+{
+    static const u16 *sTilemap;
+    if (!sTilemap)
+    {
+        sTilemap = AssetsLoadFile("graphics/summary_screen/status_tilemap.bin", NULL);
+        sStatusTilemapCtrl1.gfx = sTilemap;
+        sStatusTilemapCtrl2.gfx = sTilemap;
+    }
+    return sTilemap;
+}
+#else
 static const u16 sStatusTilemap[] = INCBIN_U16("graphics/summary_screen/status_tilemap.bin");
 static const struct TilemapCtrl sStatusTilemapCtrl1 =
 {
@@ -375,6 +393,7 @@ static const struct TilemapCtrl sStatusTilemapCtrl2 =
 {
     sStatusTilemap, 1, 10, 2, 0, 50
 };
+#endif
 static const struct TilemapCtrl sBattleMoveTilemapCtrl =
 {
     gSummaryScreen_MoveEffect_Battle_Tilemap, 0, 10, 7, 0, 45
@@ -702,10 +721,23 @@ static const u8 sTextColors[][3] =
     {0, 7, 8}
 };
 
+#ifdef PLATFORM_PC
+static const u8 *LoadSummaryButtonGfx(bool8 bButton)
+{
+    static const u8 *sAGfx;
+    static const u8 *sBGfx;
+    if (!sAGfx)
+        sAGfx = AssetsLoad4bpp("graphics/summary_screen/a_button.png", NULL, NULL);
+    if (!sBGfx)
+        sBGfx = AssetsLoad4bpp("graphics/summary_screen/b_button.png", NULL, NULL);
+    return bButton ? sBGfx : sAGfx;
+}
+#else
 static const u8 sButtons_Gfx[][4 * TILE_SIZE_4BPP] = {
     INCBIN_U8("graphics/summary_screen/a_button.4bpp"),
     INCBIN_U8("graphics/summary_screen/b_button.4bpp"),
 };
+#endif
 
 static void (*const sTextPrinterFunctions[])(void) =
 {
@@ -1074,7 +1106,17 @@ static const struct SpriteTemplate sSpriteTemplate_StatusCondition =
     .affineAnims = gDummySpriteAffineAnimTable,
     .callback = SpriteCallbackDummy
 };
+#ifdef PLATFORM_PC
+static const u16 *LoadMarkingsPal(void)
+{
+    static const u16 *pal;
+    if (!pal)
+        pal = AssetsLoadPal("graphics/summary_screen/markings.pal", NULL);
+    return pal;
+}
+#else
 static const u16 sMarkings_Pal[] = INCBIN_U16("graphics/summary_screen/markings.gbapal");
+#endif
 
 // code
 void ShowPokemonSummaryScreen(u8 mode, void *mons, u8 monIndex, u8 maxMonIndex, void (*callback)(void))
@@ -1116,6 +1158,9 @@ void ShowPokemonSummaryScreen(u8 mode, void *mons, u8 monIndex, u8 maxMonIndex, 
     if (gMonSpritesGfxPtr == NULL)
         CreateMonSpritesGfxManager(MON_SPR_GFX_MANAGER_A, MON_SPR_GFX_MODE_NORMAL);
 
+#ifdef PLATFORM_PC
+    LoadStatusTilemap();
+#endif
     SetMainCallback2(CB2_InitSummaryScreen);
 }
 
@@ -2793,10 +2838,14 @@ static void PrintGenderSymbol(struct Pokemon *mon, u16 species)
 static void PrintAOrBButtonIcon(u8 windowId, bool8 bButton, u32 x)
 {
     const u8 *button;
+#ifdef PLATFORM_PC
+    button = LoadSummaryButtonGfx(bButton);
+#else
     if (!bButton)
         button = sButtons_Gfx[0];
     else
         button = sButtons_Gfx[1];
+#endif
 
     BlitBitmapToWindow(windowId, button, x, 0, 16, 16);
 }
@@ -4019,7 +4068,11 @@ static void StopPokemonAnimations(void)  // A subtle effect, this function stops
 
 static void CreateMonMarkingsSprite(struct Pokemon *mon)
 {
+#ifdef PLATFORM_PC
+    struct Sprite *sprite = CreateMonMarkingAllCombosSprite(TAG_MON_MARKINGS, TAG_MON_MARKINGS, LoadMarkingsPal());
+#else
     struct Sprite *sprite = CreateMonMarkingAllCombosSprite(TAG_MON_MARKINGS, TAG_MON_MARKINGS, sMarkings_Pal);
+#endif
 
     sMonSummaryScreen->markingsSprite = sprite;
     if (sprite != NULL)
