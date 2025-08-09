@@ -14,6 +14,9 @@
 #include "palette.h"
 #include "constants/songs.h"
 #include "sound.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 #include "mystery_gift_menu.h"
 #include "union_room.h"
 #include "title_screen.h"
@@ -47,9 +50,26 @@ static void Task_MysteryGift(u8 taskId);
 
 EWRAM_DATA static u8 sDownArrowCounterAndYCoordIdx[8] = {};
 EWRAM_DATA bool8 gGiftIsFromEReader = FALSE;
+#ifdef PLATFORM_PC
+static const u16 *LoadMysteryGiftBorderPal(void)
+{
+    static const u16 *sPal;
+    if (!sPal)
+        sPal = AssetsGetPNGPalette("graphics/interface/mystery_gift_textbox_border.png", NULL);
+    return sPal;
+}
 
+static const u8 *LoadMysteryGiftBorderGfx(void)
+{
+    static const u8 *sGfx;
+    if (!sGfx)
+        sGfx = AssetsLoad4bpp("graphics/interface/mystery_gift_textbox_border.png", NULL, NULL);
+    return sGfx;
+}
+#else
 static const u16 sTextboxBorder_Pal[] = INCBIN_U16("graphics/interface/mystery_gift_textbox_border.gbapal");
 static const u32 sTextboxBorder_Gfx[] = INCBIN_U32("graphics/interface/mystery_gift_textbox_border.4bpp.lz");
+#endif
 
 struct MysteryGiftTaskData
 {
@@ -419,7 +439,13 @@ static bool32 HandleMysteryGiftOrEReaderSetup(s32 isEReader)
         gMain.state++;
         break;
     case 1:
-        LoadPalette(sTextboxBorder_Pal, BG_PLTT_ID(0), PLTT_SIZE_4BPP);
+        LoadPalette(
+#ifdef PLATFORM_PC
+            LoadMysteryGiftBorderPal(),
+#else
+            sTextboxBorder_Pal,
+#endif
+            BG_PLTT_ID(0), PLTT_SIZE_4BPP);
         LoadPalette(GetTextWindowPalette(2), BG_PLTT_ID(13), PLTT_SIZE_4BPP);
         Menu_LoadStdPalAt(BG_PLTT_ID(12));
         LoadUserWindowBorderGfx(0, 0xA, BG_PLTT_ID(14));
@@ -1622,5 +1648,10 @@ u16 GetMysteryGiftBaseBlock(void)
 
 static void LoadMysteryGiftTextboxBorder(u8 bgId)
 {
+#ifdef PLATFORM_PC
+    const u8 *tiles = LoadMysteryGiftBorderGfx();
+    LoadBgTiles(bgId, tiles, 0x100, 0);
+#else
     DecompressAndLoadBgGfxUsingHeap(bgId, sTextboxBorder_Gfx, 0x100, 0, 0);
+#endif
 }
