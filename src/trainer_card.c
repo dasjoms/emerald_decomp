@@ -32,6 +32,9 @@
 #include "constants/rgb.h"
 #include "constants/trainers.h"
 #include "constants/union_room.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 enum {
     WIN_MSG,
@@ -168,6 +171,7 @@ static bool8 Task_EndCardFlip(struct Task *task);
 static void UpdateCardFlipRegs(u16);
 static void LoadMonIconGfx(void);
 
+#ifndef PLATFORM_PC
 static const u32 sTrainerCardStickers_Gfx[]      = INCBIN_U32("graphics/trainer_card/frlg/stickers.4bpp.lz");
 static const u16 sUnused_Pal[]                   = INCBIN_U16("graphics/trainer_card/unused.gbapal");
 static const u16 sHoennTrainerCardBronze_Pal[]   = INCBIN_U16("graphics/trainer_card/bronze.gbapal");
@@ -189,6 +193,7 @@ static const u16 sTrainerCardSticker3_Pal[]      = INCBIN_U16("graphics/trainer_
 static const u16 sTrainerCardSticker4_Pal[]      = INCBIN_U16("graphics/trainer_card/frlg/stickers4.gbapal");
 static const u32 sHoennTrainerCardBadges_Gfx[]   = INCBIN_U32("graphics/trainer_card/badges.4bpp.lz");
 static const u32 sKantoTrainerCardBadges_Gfx[]   = INCBIN_U32("graphics/trainer_card/frlg/badges.4bpp.lz");
+#endif
 
 static const struct BgTemplate sTrainerCardBgTemplates[4] =
 {
@@ -262,6 +267,7 @@ static const struct WindowTemplate sTrainerCardWindowTemplates[] =
     DUMMY_WIN_TEMPLATE
 };
 
+#ifndef PLATFORM_PC
 static const u16 *const sHoennTrainerCardPals[] =
 {
     gHoennTrainerCardGreen_Pal,  // Default (0 stars)
@@ -279,6 +285,25 @@ static const u16 *const sKantoTrainerCardPals[] =
     sKantoTrainerCardSilver_Pal, // 3 stars
     sKantoTrainerCardGold_Pal,   // 4 stars
 };
+#else
+static const char *const sHoennTrainerCardPalPaths[] =
+{
+    "graphics/trainer_card/green.pal",  // Default (0 stars)
+    "graphics/trainer_card/bronze.pal", // 1 star
+    "graphics/trainer_card/copper.pal", // 2 stars
+    "graphics/trainer_card/silver.pal", // 3 stars
+    "graphics/trainer_card/gold.pal",   // 4 stars
+};
+
+static const char *const sKantoTrainerCardPalPaths[] =
+{
+    "graphics/trainer_card/frlg/blue.pal",   // Default (0 stars)
+    "graphics/trainer_card/frlg/green.pal",  // 1 star
+    "graphics/trainer_card/frlg/bronze.pal", // 2 stars
+    "graphics/trainer_card/frlg/silver.pal", // 3 stars
+    "graphics/trainer_card/frlg/gold.pal",   // 4 stars
+};
+#endif
 
 static const u8 sTrainerCardTextColors[] = {TEXT_COLOR_TRANSPARENT, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_LIGHT_GRAY};
 static const u8 sTrainerCardStatColors[] = {TEXT_COLOR_TRANSPARENT, TEXT_COLOR_RED, TEXT_COLOR_LIGHT_RED};
@@ -535,47 +560,161 @@ static bool8 LoadCardGfx(void)
     {
     case 0:
         if (sData->cardType != CARD_TYPE_FRLG)
+        {
+#ifdef PLATFORM_PC
+            const u16 *tilemap = AssetsLoadFile("graphics/trainer_card/bg.bin", NULL);
+            if (tilemap)
+                CpuCopy16(tilemap, sData->bgTilemap, sizeof(sData->bgTilemap));
+#else
             LZ77UnCompWram(gHoennTrainerCardBg_Tilemap, sData->bgTilemap);
+#endif
+        }
         else
+        {
+#ifdef PLATFORM_PC
+            const u16 *tilemap = AssetsLoadFile("graphics/trainer_card/frlg/bg.bin", NULL);
+            if (tilemap)
+                CpuCopy16(tilemap, sData->bgTilemap, sizeof(sData->bgTilemap));
+#else
             LZ77UnCompWram(gKantoTrainerCardBg_Tilemap, sData->bgTilemap);
+#endif
+        }
         break;
     case 1:
         if (sData->cardType != CARD_TYPE_FRLG)
+        {
+#ifdef PLATFORM_PC
+            const u16 *tilemap = AssetsLoadFile("graphics/trainer_card/back.bin", NULL);
+            if (tilemap)
+                CpuCopy16(tilemap, sData->backTilemap, sizeof(sData->backTilemap));
+#else
             LZ77UnCompWram(gHoennTrainerCardBack_Tilemap, sData->backTilemap);
+#endif
+        }
         else
+        {
+#ifdef PLATFORM_PC
+            const u16 *tilemap = AssetsLoadFile("graphics/trainer_card/frlg/back.bin", NULL);
+            if (tilemap)
+                CpuCopy16(tilemap, sData->backTilemap, sizeof(sData->backTilemap));
+#else
             LZ77UnCompWram(gKantoTrainerCardBack_Tilemap, sData->backTilemap);
+#endif
+        }
         break;
     case 2:
         if (!sData->isLink)
         {
             if (sData->cardType != CARD_TYPE_FRLG)
+            {
+#ifdef PLATFORM_PC
+                const u16 *tilemap = AssetsLoadFile("graphics/trainer_card/front.bin", NULL);
+                if (tilemap)
+                    CpuCopy16(tilemap, sData->frontTilemap, sizeof(sData->frontTilemap));
+#else
                 LZ77UnCompWram(gHoennTrainerCardFront_Tilemap, sData->frontTilemap);
+#endif
+            }
             else
+            {
+#ifdef PLATFORM_PC
+                const u16 *tilemap = AssetsLoadFile("graphics/trainer_card/frlg/front.bin", NULL);
+                if (tilemap)
+                    CpuCopy16(tilemap, sData->frontTilemap, sizeof(sData->frontTilemap));
+#else
                 LZ77UnCompWram(gKantoTrainerCardFront_Tilemap, sData->frontTilemap);
+#endif
+            }
         }
         else
         {
             if (sData->cardType != CARD_TYPE_FRLG)
+            {
+#ifdef PLATFORM_PC
+                const u16 *tilemap = AssetsLoadFile("graphics/trainer_card/front_link.bin", NULL);
+                if (tilemap)
+                    CpuCopy16(tilemap, sData->frontTilemap, sizeof(sData->frontTilemap));
+#else
                 LZ77UnCompWram(gHoennTrainerCardFrontLink_Tilemap, sData->frontTilemap);
+#endif
+            }
             else
+            {
+#ifdef PLATFORM_PC
+                const u16 *tilemap = AssetsLoadFile("graphics/trainer_card/frlg/front_link.bin", NULL);
+                if (tilemap)
+                    CpuCopy16(tilemap, sData->frontTilemap, sizeof(sData->frontTilemap));
+#else
                 LZ77UnCompWram(gKantoTrainerCardFrontLink_Tilemap, sData->frontTilemap);
+#endif
+            }
         }
         break;
     case 3:
         if (sData->cardType != CARD_TYPE_FRLG)
+        {
+#ifdef PLATFORM_PC
+            const u8 *tiles = AssetsLoad4bpp("graphics/trainer_card/badges.png", NULL, NULL);
+            if (tiles)
+                CpuCopy16(tiles, sData->badgeTiles, sizeof(sData->badgeTiles));
+#else
             LZ77UnCompWram(sHoennTrainerCardBadges_Gfx, sData->badgeTiles);
+#endif
+        }
         else
+        {
+#ifdef PLATFORM_PC
+            const u8 *tiles = AssetsLoad4bpp("graphics/trainer_card/frlg/badges.png", NULL, NULL);
+            if (tiles)
+                CpuCopy16(tiles, sData->badgeTiles, sizeof(sData->badgeTiles));
+#else
             LZ77UnCompWram(sKantoTrainerCardBadges_Gfx, sData->badgeTiles);
+#endif
+        }
         break;
     case 4:
         if (sData->cardType != CARD_TYPE_FRLG)
+        {
+#ifdef PLATFORM_PC
+            size_t size;
+            const u8 *tiles = AssetsLoad4bpp("graphics/trainer_card/tiles.png", NULL, &size);
+            if (tiles)
+            {
+                if (size > sizeof(sData->cardTiles))
+                    size = sizeof(sData->cardTiles);
+                CpuCopy16(tiles, sData->cardTiles, size);
+            }
+#else
             LZ77UnCompWram(gHoennTrainerCard_Gfx, sData->cardTiles);
+#endif
+        }
         else
+        {
+#ifdef PLATFORM_PC
+            size_t size;
+            const u8 *tiles = AssetsLoad4bpp("graphics/trainer_card/frlg/tiles.png", NULL, &size);
+            if (tiles)
+            {
+                if (size > sizeof(sData->cardTiles))
+                    size = sizeof(sData->cardTiles);
+                CpuCopy16(tiles, sData->cardTiles, size);
+            }
+#else
             LZ77UnCompWram(gKantoTrainerCard_Gfx, sData->cardTiles);
+#endif
+        }
         break;
     case 5:
         if (sData->cardType == CARD_TYPE_FRLG)
+        {
+#ifdef PLATFORM_PC
+            const u8 *tiles = AssetsLoad4bpp("graphics/trainer_card/frlg/stickers.png", NULL, NULL);
+            if (tiles)
+                CpuCopy16(tiles, sData->stickerTiles, sizeof(sData->stickerTiles));
+#else
             LZ77UnCompWram(sTrainerCardStickers_Gfx, sData->stickerTiles);
+#endif
+        }
         break;
     default:
         sData->gfxLoadState = 0;
@@ -1405,11 +1544,19 @@ static void PrintStickersOnCard(void)
 
 static void LoadStickerGfx(void)
 {
+#ifdef PLATFORM_PC
+    LoadPalette(AssetsLoadPal("graphics/trainer_card/frlg/stickers1.pal", NULL), BG_PLTT_ID(11), PLTT_SIZE_4BPP);
+    LoadPalette(AssetsLoadPal("graphics/trainer_card/frlg/stickers2.pal", NULL), BG_PLTT_ID(12), PLTT_SIZE_4BPP);
+    LoadPalette(AssetsLoadPal("graphics/trainer_card/frlg/stickers3.pal", NULL), BG_PLTT_ID(13), PLTT_SIZE_4BPP);
+    LoadPalette(AssetsLoadPal("graphics/trainer_card/frlg/stickers4.pal", NULL), BG_PLTT_ID(14), PLTT_SIZE_4BPP);
+    LoadBgTiles(3, sData->stickerTiles, 1024, 128);
+#else
     LoadPalette(sTrainerCardSticker1_Pal, BG_PLTT_ID(11), PLTT_SIZE_4BPP);
     LoadPalette(sTrainerCardSticker2_Pal, BG_PLTT_ID(12), PLTT_SIZE_4BPP);
     LoadPalette(sTrainerCardSticker3_Pal, BG_PLTT_ID(13), PLTT_SIZE_4BPP);
     LoadPalette(sTrainerCardSticker4_Pal, BG_PLTT_ID(14), PLTT_SIZE_4BPP);
     LoadBgTiles(3, sData->stickerTiles, 1024, 128);
+#endif
 }
 
 static void DrawTrainerCardWindow(u8 windowId)
@@ -1429,6 +1576,23 @@ static u8 SetCardBgsAndPals(void)
         LoadBgTiles(0, sData->cardTiles, 0x1800, 0);
         break;
     case 2:
+#ifdef PLATFORM_PC
+        if (sData->cardType != CARD_TYPE_FRLG)
+        {
+            LoadPalette(AssetsLoadPal(sHoennTrainerCardPalPaths[sData->trainerCard.stars], NULL), BG_PLTT_ID(0), 3 * PLTT_SIZE_4BPP);
+            LoadPalette(AssetsLoadPal("graphics/trainer_card/badges.pal", NULL), BG_PLTT_ID(3), PLTT_SIZE_4BPP);
+            if (sData->trainerCard.gender != MALE)
+                LoadPalette(AssetsLoadPal("graphics/trainer_card/female_bg.pal", NULL), BG_PLTT_ID(1), PLTT_SIZE_4BPP);
+        }
+        else
+        {
+            LoadPalette(AssetsLoadPal(sKantoTrainerCardPalPaths[sData->trainerCard.stars], NULL), BG_PLTT_ID(0), 3 * PLTT_SIZE_4BPP);
+            LoadPalette(AssetsLoadPal("graphics/trainer_card/frlg/badges.pal", NULL), BG_PLTT_ID(3), PLTT_SIZE_4BPP);
+            if (sData->trainerCard.gender != MALE)
+                LoadPalette(AssetsLoadPal("graphics/trainer_card/frlg/female_bg.pal", NULL), BG_PLTT_ID(1), PLTT_SIZE_4BPP);
+        }
+        LoadPalette(AssetsLoadPal("graphics/trainer_card/star.pal", NULL), BG_PLTT_ID(4), PLTT_SIZE_4BPP);
+#else
         if (sData->cardType != CARD_TYPE_FRLG)
         {
             LoadPalette(sHoennTrainerCardPals[sData->trainerCard.stars], BG_PLTT_ID(0), 3 * PLTT_SIZE_4BPP);
@@ -1444,6 +1608,7 @@ static u8 SetCardBgsAndPals(void)
                 LoadPalette(sKantoTrainerCardFemaleBg_Pal, BG_PLTT_ID(1), PLTT_SIZE_4BPP);
         }
         LoadPalette(sTrainerCardStar_Pal, BG_PLTT_ID(4), PLTT_SIZE_4BPP);
+#endif
         break;
     case 3:
         SetBgTilemapBuffer(0, sData->cardTilemapBuffer);
