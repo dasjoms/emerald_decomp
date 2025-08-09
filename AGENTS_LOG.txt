@@ -35,3 +35,4 @@
 - Replaced Mystery Gift menu textbox border INCBIN data with runtime PNG loading for graphics and palette to advance PC asset migration.
 - Converted Move Relearner interface graphics and palette to load from PNG at runtime on PC builds, eliminating remaining INCBIN assets for that menu.
 - Converted Option Menu text palette and equals sign graphic to load from external files at runtime for PC builds, removing INCBIN data from that menu.
+- Converted Save Failed screen clock graphics and palette to load from PNG at runtime for PC builds, eliminating corresponding INCBIN data.
