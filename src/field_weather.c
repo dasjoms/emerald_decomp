@@ -18,6 +18,7 @@
 #include "gpu_regs.h"
 #ifdef PLATFORM_PC
 #include "../platform/pc/assets.h"
+#include <stdio.h>
 #endif
 
 #define DROUGHT_COLOR_INDEX(color) ((((color) >> 1) & 0xF) | (((color) >> 2) & 0xF0) | (((color) >> 3) & 0xF00))
@@ -68,6 +69,21 @@ EWRAM_DATA static u8 ALIGNED(2) sFieldEffectPaletteColorMapTypes[32] = {0};
 
 static const u8 *sPaletteColorMapTypes;
 
+#ifdef PLATFORM_PC
+// The drought weather effect uses precalculated colour lookup tables. Load them lazily
+// from external binary files so the PC build has no embedded INCBIN assets.
+static const u16 *LoadDroughtWeatherColors(u8 index)
+{
+    static const u16 *tables[6];
+    if (!tables[index])
+    {
+        char path[64];
+        snprintf(path, sizeof(path), "graphics/weather/drought/colors_%u.bin", index);
+        tables[index] = AssetsLoadFile(path, NULL);
+    }
+    return tables[index];
+}
+#else
 // The drought weather effect uses a precalculated color lookup table. Presumably this
 // is because the underlying color shift calculation is slow.
 static const u16 sDroughtWeatherColors[][0x1000] = {
@@ -78,6 +94,7 @@ static const u16 sDroughtWeatherColors[][0x1000] = {
     INCBIN_U16("graphics/weather/drought/colors_4.bin"),
     INCBIN_U16("graphics/weather/drought/colors_5.bin"),
 };
+#endif
 
 // This is a pointer to gWeather. All code in this file accesses gWeather directly,
 // while code in other field weather files accesses gWeather through this pointer.
@@ -540,7 +557,11 @@ static void ApplyColorMap(u8 startPalIndex, u8 numPalettes, s8 colorMapIndex)
             {
                 for (i = 0; i < 16; i++)
                 {
+                    #ifdef PLATFORM_PC
+                    gPlttBufferFaded[palOffset] = LoadDroughtWeatherColors(colorMapIndex)[DROUGHT_COLOR_INDEX(gPlttBufferUnfaded[palOffset])];
+                    #else
                     gPlttBufferFaded[palOffset] = sDroughtWeatherColors[colorMapIndex][DROUGHT_COLOR_INDEX(gPlttBufferUnfaded[palOffset])];
+                    #endif
                     palOffset++;
                 }
             }
@@ -646,7 +667,11 @@ static void ApplyDroughtColorMapWithBlend(s8 colorMapIndex, u8 blendCoeff, u16 b
                 b1 = color1.b;
 
                 offset = ((b1 & 0x1E) << 7) | ((g1 & 0x1E) << 3) | ((r1 & 0x1E) >> 1);
+                #ifdef PLATFORM_PC
+                color2 = *(struct RGBColor *)&LoadDroughtWeatherColors(colorMapIndex)[offset];
+                #else
                 color2 = *(struct RGBColor *)&sDroughtWeatherColors[colorMapIndex][offset];
+                #endif
                 r2 = color2.r;
                 g2 = color2.g;
                 b2 = color2.b;
