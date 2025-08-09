@@ -15,6 +15,9 @@
 #include "window.h"
 #include "gba/m4a_internal.h"
 #include "constants/rgb.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 #define tMenuSelection data[0]
 #define tTextSpeed data[1]
@@ -72,9 +75,31 @@ static void DrawBgWindowFrames(void);
 
 EWRAM_DATA static bool8 sArrowPressed = FALSE;
 
+#ifdef PLATFORM_PC
+static const u16 *LoadOptionMenuTextPal(void)
+{
+    static const u16 *sPal;
+    if (!sPal)
+        sPal = AssetsLoadPal("graphics/interface/option_menu_text.pal", NULL);
+    return sPal;
+}
+
+// note: this is only used in the Japanese release
+static const u8 *LoadOptionMenuEqualSignGfx(size_t *size)
+{
+    static const u8 *sGfx;
+    static size_t sSize;
+    if (!sGfx)
+        sGfx = AssetsLoad4bpp("graphics/interface/option_menu_equals_sign.png", NULL, &sSize);
+    if (size)
+        *size = sSize;
+    return sGfx;
+}
+#else
 static const u16 sOptionMenuText_Pal[] = INCBIN_U16("graphics/interface/option_menu_text.gbapal");
 // note: this is only used in the Japanese release
 static const u8 sEqualSignGfx[] = INCBIN_U8("graphics/interface/option_menu_equals_sign.4bpp");
+#endif
 
 static const u8 *const sOptionMenuItemsNames[MENUITEM_COUNT] =
 {
@@ -204,7 +229,11 @@ void CB2_InitOptionMenu(void)
         gMain.state++;
         break;
     case 5:
+#ifdef PLATFORM_PC
+        LoadPalette(LoadOptionMenuTextPal(), BG_PLTT_ID(1), PLTT_SIZE_4BPP);
+#else
         LoadPalette(sOptionMenuText_Pal, BG_PLTT_ID(1), sizeof(sOptionMenuText_Pal));
+#endif
         gMain.state++;
         break;
     case 6:
