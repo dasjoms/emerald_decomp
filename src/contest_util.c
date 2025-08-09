@@ -38,6 +38,9 @@
 #include "trig.h"
 #include "tv.h"
 #include "util.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 #include "window.h"
 #include "constants/event_objects.h"
 #include "constants/field_specials.h"
@@ -187,8 +190,26 @@ static void SpriteCB_Confetti(struct Sprite *sprite);
 static void Task_ShowContestEntryMonPic(u8 taskId);
 static void Task_LinkContestWaitForConnection(u8 taskId);
 
+#ifdef PLATFORM_PC
+static const u16 *LoadResultsTextWindowPal(void)
+{
+    static const u16 *sPal;
+    if (!sPal)
+        sPal = AssetsLoadPal("graphics/contest/results_screen/text_window.pal", NULL);
+    return sPal;
+}
+
+static const u8 *LoadResultsTextWindowGfx(void)
+{
+    static const u8 *sGfx;
+    if (!sGfx)
+        sGfx = AssetsLoad4bpp("graphics/contest/results_screen/text_window.png", "graphics/contest/results_screen/text_window.pal", NULL);
+    return sGfx;
+}
+#else
 static const u16 sResultsTextWindow_Pal[] = INCBIN_U16("graphics/contest/results_screen/text_window.gbapal");
 static const u8 sResultsTextWindow_Gfx[] = INCBIN_U8("graphics/contest/results_screen/text_window.4bpp");
+#endif
 
 static const struct OamData sOamData_ResultsTextWindow =
 {
@@ -476,7 +497,13 @@ static void LoadContestResultsBgGfx(void)
     CopyToBgTilemapBuffer(0, gContestResults_WinnerBanner_Tilemap, 0, 0);
     LoadContestResultsTitleBarTilemaps();
     LoadCompressedPalette(gContestResults_Pal, BG_PLTT_OFFSET, BG_PLTT_SIZE);
-    LoadPalette(sResultsTextWindow_Pal, BG_PLTT_ID(15), sizeof(sResultsTextWindow_Pal));
+    LoadPalette(
+#ifdef PLATFORM_PC
+                LoadResultsTextWindowPal(),
+#else
+                sResultsTextWindow_Pal,
+#endif
+                BG_PLTT_ID(15), sizeof(sResultsTextWindow_Pal));
 
     for (i = 0; i < CONTESTANT_COUNT; i++)
     {
@@ -1210,7 +1237,13 @@ static s32 DrawResultsTextWindow(const u8 *text, u8 spriteId)
         struct Sprite *sprite;
         const u8 *src, *windowTilesPtr;
         windowTilesPtr = (u8 *)GetWindowAttribute(windowId, WINDOW_TILE_DATA);
-        src = (u8 *)sResultsTextWindow_Gfx;
+        src = (u8 *)(
+#ifdef PLATFORM_PC
+                LoadResultsTextWindowGfx()
+#else
+                sResultsTextWindow_Gfx
+#endif
+        );
 
         sprite = &gSprites[spriteId];
         spriteTilePtrs[0] = (u8 *)(sprite->oam.tileNum * 32 + OBJ_VRAM0);
