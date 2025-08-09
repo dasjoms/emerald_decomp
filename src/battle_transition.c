@@ -24,6 +24,9 @@
 #include "constants/songs.h"
 #include "constants/trainers.h"
 #include "constants/rgb.h"
+#ifdef PLATFORM_PC
+#include "platform/pc/assets.h"
+#endif
 
 #define PALTAG_UNUSED_MUGSHOT 0x100A
 
@@ -295,9 +298,43 @@ static struct RectangularSpiralLine sRectangularSpiralLines[4];
 
 EWRAM_DATA static struct TransitionData *sTransitionData = NULL;
 
+#ifdef PLATFORM_PC
+static const u32 *LoadBigPokeballTileset(size_t *size)
+{
+    static const u32 *sTiles;
+    static size_t sSize;
+    if (!sTiles)
+        sTiles = (const u32 *)AssetsLoad4bpp("graphics/battle_transitions/big_pokeball.png", NULL, &sSize);
+    if (size)
+        *size = sSize;
+    return sTiles;
+}
+
+static const u32 *LoadPokeballTrailTileset(size_t *size)
+{
+    static const u32 *sTiles;
+    static size_t sSize;
+    if (!sTiles)
+        sTiles = (const u32 *)AssetsLoad4bpp("graphics/battle_transitions/pokeball_trail.png", NULL, &sSize);
+    if (size)
+        *size = sSize;
+    return sTiles;
+}
+
+static struct SpriteFrameImage sSpriteImage_Pokeball[] = {{NULL, 0}};
+
+static void LoadPokeballGfx(void)
+{
+    size_t size;
+    if (!sSpriteImage_Pokeball[0].data)
+        sSpriteImage_Pokeball[0].data = AssetsLoad4bpp("graphics/battle_transitions/pokeball.png", NULL, &size);
+    sSpriteImage_Pokeball[0].size = size;
+}
+#else
 static const u32 sBigPokeball_Tileset[] = INCBIN_U32("graphics/battle_transitions/big_pokeball.4bpp");
 static const u32 sPokeballTrail_Tileset[] = INCBIN_U32("graphics/battle_transitions/pokeball_trail.4bpp");
 static const u8 sPokeball_Gfx[] = INCBIN_U8("graphics/battle_transitions/pokeball.4bpp");
+#endif
 static const u32 sEliteFour_Tileset[] = INCBIN_U32("graphics/battle_transitions/elite_four_bg.4bpp");
 static const u8 sUnusedBrendan_Gfx[] = INCBIN_U8("graphics/battle_transitions/unused_brendan.4bpp");
 static const u8 sUnusedLass_Gfx[] = INCBIN_U8("graphics/battle_transitions/unused_lass.4bpp");
@@ -777,10 +814,12 @@ static const TransitionStateFunc sTransitionIntroFuncs[] =
     TransitionIntro_FadeFromGray
 };
 
+#ifndef PLATFORM_PC
 static const struct SpriteFrameImage sSpriteImage_Pokeball[] =
 {
     {sPokeball_Gfx, sizeof(sPokeball_Gfx)}
 };
+#endif
 
 static const union AnimCmd sSpriteAnim_Pokeball[] =
 {
@@ -882,9 +921,23 @@ static const struct SpriteTemplate sSpriteTemplate_UnusedLass =
     .callback = SpriteCB_MugshotTrainerPic
 };
 
+#ifdef PLATFORM_PC
+static const u16 *LoadFieldEffectPalPokeball(size_t *size)
+{
+    static const u16 *sPal;
+    static size_t sSize;
+    if (!sPal)
+        sPal = AssetsLoadPal("graphics/field_effects/palettes/pokeball.pal", &sSize);
+    if (size)
+        *size = sSize;
+    return sPal;
+}
+const struct SpritePalette gSpritePalette_Pokeball = {NULL, FLDEFF_PAL_TAG_POKEBALL_TRAIL};
+#else
 static const u16 sFieldEffectPal_Pokeball[] = INCBIN_U16("graphics/field_effects/palettes/pokeball.gbapal");
 
 const struct SpritePalette gSpritePalette_Pokeball = {sFieldEffectPal_Pokeball, FLDEFF_PAL_TAG_POKEBALL_TRAIL};
+#endif
 
 static const u16 sMugshotPal_Sidney[] = INCBIN_U16("graphics/battle_transitions/sidney_bg.gbapal");
 static const u16 sMugshotPal_Phoebe[] = INCBIN_U16("graphics/battle_transitions/phoebe_bg.gbapal");
@@ -1447,8 +1500,16 @@ static bool8 BigPokeball_Init(struct Task *task)
     InitPatternWeaveTransition(task);
     GetBg0TilesDst(&tilemap, &tileset);
     CpuFill16(0, tilemap, BG_SCREEN_SIZE);
+#ifdef PLATFORM_PC
+    size_t tilesetSize, palSize;
+    const u32 *tiles = LoadBigPokeballTileset(&tilesetSize);
+    const u16 *pal = LoadFieldEffectPalPokeball(&palSize);
+    CpuCopy16(tiles, tileset, tilesetSize);
+    LoadPalette(pal, BG_PLTT_ID(15), palSize);
+#else
     CpuCopy16(sBigPokeball_Tileset, tileset, sizeof(sBigPokeball_Tileset));
     LoadPalette(sFieldEffectPal_Pokeball, BG_PLTT_ID(15), sizeof(sFieldEffectPal_Pokeball));
+#endif
 
     task->tState++;
     return FALSE;
@@ -1773,9 +1834,18 @@ static bool8 PokeballsTrail_Init(struct Task *task)
     u16 *tilemap, *tileset;
 
     GetBg0TilesDst(&tilemap, &tileset);
+#ifdef PLATFORM_PC
+    size_t tilesSize, palSize;
+    const u32 *tiles = LoadPokeballTrailTileset(&tilesSize);
+    const u16 *pal = LoadFieldEffectPalPokeball(&palSize);
+    CpuSet(tiles, tileset, tilesSize / 2);
+    CpuFill32(0, tilemap, BG_SCREEN_SIZE);
+    LoadPalette(pal, BG_PLTT_ID(15), palSize);
+#else
     CpuSet(sPokeballTrail_Tileset, tileset, 0x20);
     CpuFill32(0, tilemap, BG_SCREEN_SIZE);
     LoadPalette(sFieldEffectPal_Pokeball, BG_PLTT_ID(15), sizeof(sFieldEffectPal_Pokeball));
+#endif
 
     task->tState++;
     return FALSE;
@@ -1818,6 +1888,9 @@ static bool8 PokeballsTrail_End(struct Task *task)
 
 bool8 FldEff_PokeballTrail(void)
 {
+#ifdef PLATFORM_PC
+    LoadPokeballGfx();
+#endif
     u8 spriteId = CreateSpriteAtEnd(&sSpriteTemplate_Pokeball, gFieldEffectArguments[0], gFieldEffectArguments[1], 0);
     gSprites[spriteId].oam.priority = 0;
     gSprites[spriteId].oam.affineMode = ST_OAM_AFFINE_NORMAL;
@@ -3196,7 +3269,13 @@ static bool8 RectangularSpiral_Init(struct Task *task)
     CpuCopy16(sShrinkingBoxTileset, tileset, 0x20);
     CpuCopy16(&sShrinkingBoxTileset[0x70], &tileset[0x20], 0x20);
     CpuFill16(0xF0 << 8, tilemap, BG_SCREEN_SIZE);
+#ifdef PLATFORM_PC
+    size_t palSize;
+    const u16 *pal = LoadFieldEffectPalPokeball(&palSize);
+    LoadPalette(pal, BG_PLTT_ID(15), palSize);
+#else
     LoadPalette(sFieldEffectPal_Pokeball, BG_PLTT_ID(15), sizeof(sFieldEffectPal_Pokeball));
+#endif
 
     task->data[3] = 1;
     task->tState++;
@@ -3778,7 +3857,13 @@ static bool8 GridSquares_Init(struct Task *task)
     GetBg0TilesDst(&tilemap, &tileset);
     CpuSet(sShrinkingBoxTileset, tileset, 16);
     CpuFill16(0xF0 << 8, tilemap, BG_SCREEN_SIZE);
+#ifdef PLATFORM_PC
+    size_t palSize;
+    const u16 *pal = LoadFieldEffectPalPokeball(&palSize);
+    LoadPalette(pal, BG_PLTT_ID(15), palSize);
+#else
     LoadPalette(sFieldEffectPal_Pokeball, BG_PLTT_ID(15), sizeof(sFieldEffectPal_Pokeball));
+#endif
 
     task->tState++;
     return FALSE;
