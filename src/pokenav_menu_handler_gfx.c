@@ -98,7 +98,154 @@ static void ResetBldCnt(void);
 static void InitMenuOptionGlow(void);
 static void Task_CurrentMenuOptionGlow(u8);
 static void SetMenuOptionGlow(void);
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
 
+static const u16 *LoadPokenavBgDotsPal(size_t *size)
+{
+    static const u16 *pal;
+    static size_t palSize;
+    if (!pal)
+        pal = AssetsGetPNGPalette("graphics/pokenav/bg_dots.png", &palSize);
+    if (size)
+        *size = palSize;
+    return pal;
+}
+
+static const u8 *LoadPokenavBgDotsTiles(size_t *size)
+{
+    static const u8 *tiles;
+    static size_t tilesSize;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/pokenav/bg_dots.png", NULL, &tilesSize);
+    if (size)
+        *size = tilesSize;
+    return tiles;
+}
+
+static const u16 *LoadPokenavBgDotsTilemap(size_t *size)
+{
+    static const u16 *map;
+    static size_t mapSize;
+    if (!map)
+        map = AssetsLoadFile("graphics/pokenav/bg_dots.bin", &mapSize);
+    if (size)
+        *size = mapSize;
+    return map;
+}
+
+static const u16 *LoadPokenavDeviceBgPal(size_t *size)
+{
+    static const u16 *pal;
+    static size_t palSize;
+    if (!pal)
+        pal = AssetsGetPNGPalette("graphics/pokenav/device_outline.png", &palSize);
+    if (size)
+        *size = palSize;
+    return pal;
+}
+
+static const u8 *LoadPokenavDeviceBgTiles(size_t *size)
+{
+    static const u8 *tiles;
+    static size_t tilesSize;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/pokenav/device_outline.png", NULL, &tilesSize);
+    if (size)
+        *size = tilesSize;
+    return tiles;
+}
+
+static const u16 *LoadPokenavDeviceBgTilemap(size_t *size)
+{
+    static const u16 *map;
+    static size_t mapSize;
+    if (!map)
+        map = AssetsLoadFile("graphics/pokenav/device_outline_map.bin", &mapSize);
+    if (size)
+        *size = mapSize;
+    return map;
+}
+
+static const u16 *LoadMatchCallBlueLightPal(size_t *size)
+{
+    static const u16 *pal;
+    static size_t palSize;
+    if (!pal)
+        pal = AssetsGetPNGPalette("graphics/pokenav/blue_light.png", &palSize);
+    if (size)
+        *size = palSize;
+    return pal;
+}
+
+static const u8 *LoadMatchCallBlueLightTiles(size_t *size)
+{
+    static const u8 *tiles;
+    static size_t tilesSize;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/pokenav/blue_light.png", NULL, &tilesSize);
+    if (size)
+        *size = tilesSize;
+    return tiles;
+}
+
+static const u8 *LoadPokenavMessageBoxTiles(size_t *size)
+{
+    static const u8 *tiles;
+    static size_t tilesSize;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/pokenav/message.png", NULL, &tilesSize);
+    if (size)
+        *size = tilesSize;
+    return tiles;
+}
+
+static const u16 *LoadPokenavMessageBoxTilemap(size_t *size)
+{
+    static const u16 *map;
+    static size_t mapSize;
+    if (!map)
+        map = AssetsLoadFile("graphics/pokenav/message.bin", &mapSize);
+    if (size)
+        *size = mapSize;
+    return map;
+}
+
+static const u16 *LoadPokenavMessageBoxPal(size_t *size)
+{
+    static const u16 *pal;
+    static size_t palSize;
+    if (!pal)
+        pal = AssetsGetPNGPalette("graphics/pokenav/message.png", &palSize);
+    if (size)
+        *size = palSize;
+    return pal;
+}
+
+#define sPokenavBgDotsPal       LoadPokenavBgDotsPal(NULL)
+#define sPokenavBgDotsTiles     LoadPokenavBgDotsTiles(NULL)
+#define sPokenavBgDotsTilemap   LoadPokenavBgDotsTilemap(NULL)
+#define sPokenavDeviceBgPal     LoadPokenavDeviceBgPal(NULL)
+#define sPokenavDeviceBgTiles   LoadPokenavDeviceBgTiles(NULL)
+#define sPokenavDeviceBgTilemap LoadPokenavDeviceBgTilemap(NULL)
+
+static struct CompressedSpriteSheet sPokenavOptionsSpriteSheets[] =
+{
+    { NULL, 0, GFXTAG_OPTIONS },
+    { NULL, 0, GFXTAG_BLUE_LIGHT },
+};
+
+static struct SpritePalette sPokenavOptionsSpritePalettes[] =
+{
+    { NULL, PALTAG_OPTIONS_DEFAULT },
+    { NULL, PALTAG_OPTIONS_BLUE },
+    { NULL, PALTAG_OPTIONS_PINK },
+    { NULL, PALTAG_OPTIONS_BEIGE },
+    { NULL, PALTAG_OPTIONS_RED },
+    { NULL, PALTAG_BLUE_LIGHT },
+    {},
+};
+#else
 static const u16 sPokenavBgDotsPal[] = INCBIN_U16("graphics/pokenav/bg_dots.gbapal");
 static const u32 sPokenavBgDotsTiles[] = INCBIN_U32("graphics/pokenav/bg_dots.4bpp.lz");
 static const u32 sPokenavBgDotsTilemap[] = INCBIN_U32("graphics/pokenav/bg_dots.bin.lz");
@@ -107,6 +254,32 @@ static const u32 sPokenavDeviceBgTiles[] = INCBIN_U32("graphics/pokenav/device_o
 static const u32 sPokenavDeviceBgTilemap[] = INCBIN_U32("graphics/pokenav/device_outline_map.bin.lz");
 static const u16 sMatchCallBlueLightPal[] = INCBIN_U16("graphics/pokenav/blue_light.gbapal");
 static const u32 sMatchCallBlueLightTiles[] = INCBIN_U32("graphics/pokenav/blue_light.4bpp.lz");
+
+static const struct CompressedSpriteSheet sPokenavOptionsSpriteSheets[] =
+{
+    {
+        .data = gPokenavOptions_Gfx,
+        .size = 0x3400,
+        .tag = GFXTAG_OPTIONS
+    },
+    {
+        .data = sMatchCallBlueLightTiles,
+        .size = 0x0100,
+        .tag = GFXTAG_BLUE_LIGHT
+    }
+};
+
+static const struct SpritePalette sPokenavOptionsSpritePalettes[] =
+{
+    {&gPokenavOptions_Pal[0x00], PALTAG_OPTIONS_DEFAULT},
+    {&gPokenavOptions_Pal[0x10], PALTAG_OPTIONS_BLUE},
+    {&gPokenavOptions_Pal[0x20], PALTAG_OPTIONS_PINK},
+    {&gPokenavOptions_Pal[0x30], PALTAG_OPTIONS_BEIGE},
+    {&gPokenavOptions_Pal[0x40], PALTAG_OPTIONS_RED},
+    {sMatchCallBlueLightPal, PALTAG_BLUE_LIGHT},
+    {},
+};
+#endif
 
 static const struct BgTemplate sPokenavMainMenuBgTemplates[] = {
     {
@@ -453,11 +626,25 @@ static u32 LoopedTask_OpenMenu(s32 state)
     {
     case 0:
         InitBgTemplates(sPokenavMainMenuBgTemplates, ARRAY_COUNT(sPokenavMainMenuBgTemplates));
+#ifdef PLATFORM_PC
+        {
+            size_t size;
+            const u8 *tiles = LoadPokenavMessageBoxTiles(&size);
+            LoadBgTiles(1, tiles, size, 0);
+            SetBgTilemapBuffer(1, gfx->bg1TilemapBuffer);
+            const u16 *map = LoadPokenavMessageBoxTilemap(&size);
+            memcpy(gfx->bg1TilemapBuffer, map, size);
+            CopyBgTilemapBufferToVram(1);
+            const u16 *pal = LoadPokenavMessageBoxPal(&size);
+            CopyPaletteIntoBufferUnfaded(pal, BG_PLTT_ID(1), size);
+        }
+#else
         DecompressAndCopyTileDataToVram(1, gPokenavMessageBox_Gfx, 0, 0, 0);
         SetBgTilemapBuffer(1, gfx->bg1TilemapBuffer);
         CopyToBgTilemapBuffer(1, gPokenavMessageBox_Tilemap, 0, 0);
         CopyBgTilemapBufferToVram(1);
         CopyPaletteIntoBufferUnfaded(gPokenavMessageBox_Pal, BG_PLTT_ID(1), PLTT_SIZE_4BPP);
+#endif
         ChangeBgX(1, 0, BG_COORD_SET);
         ChangeBgY(1, 0, BG_COORD_SET);
         ChangeBgX(2, 0, BG_COORD_SET);
@@ -468,18 +655,44 @@ static u32 LoopedTask_OpenMenu(s32 state)
     case 1:
         if (FreeTempTileDataBuffersIfPossible())
             return LT_PAUSE;
+#ifdef PLATFORM_PC
+        {
+            size_t size;
+            const u8 *tiles = LoadPokenavDeviceBgTiles(&size);
+            LoadBgTiles(2, tiles, size, 0);
+            const u16 *map = LoadPokenavDeviceBgTilemap(&size);
+            LoadBgTilemap(2, map, size, 0);
+            const u16 *pal = LoadPokenavDeviceBgPal(&size);
+            CopyPaletteIntoBufferUnfaded(pal, BG_PLTT_ID(2), size);
+        }
+#else
         DecompressAndCopyTileDataToVram(2, sPokenavDeviceBgTiles, 0, 0, 0);
         DecompressAndCopyTileDataToVram(2, sPokenavDeviceBgTilemap, 0, 0, 1);
         CopyPaletteIntoBufferUnfaded(sPokenavDeviceBgPal, BG_PLTT_ID(2), sizeof(sPokenavDeviceBgPal));
+#endif
         return LT_INC_AND_PAUSE;
     case 2:
         if (FreeTempTileDataBuffersIfPossible())
             return LT_PAUSE;
+#ifdef PLATFORM_PC
+        {
+            size_t size;
+            const u8 *tiles = LoadPokenavBgDotsTiles(&size);
+            LoadBgTiles(3, tiles, size, 0);
+            const u16 *map = LoadPokenavBgDotsTilemap(&size);
+            LoadBgTilemap(3, map, size, 0);
+            const u16 *pal = LoadPokenavBgDotsPal(&size);
+            CopyPaletteIntoBufferUnfaded(pal, BG_PLTT_ID(3), size);
+            if (GetPokenavMenuType() == POKENAV_MENU_TYPE_CONDITION || GetPokenavMenuType() == POKENAV_MENU_TYPE_CONDITION_SEARCH)
+                ChangeBgDotsColorToPurple();
+        }
+#else
         DecompressAndCopyTileDataToVram(3, sPokenavBgDotsTiles, 0, 0, 0);
         DecompressAndCopyTileDataToVram(3, sPokenavBgDotsTilemap, 0, 0, 1);
         CopyPaletteIntoBufferUnfaded(sPokenavBgDotsPal, BG_PLTT_ID(3), sizeof(sPokenavBgDotsPal));
         if (GetPokenavMenuType() == POKENAV_MENU_TYPE_CONDITION || GetPokenavMenuType() == POKENAV_MENU_TYPE_CONDITION_SEARCH)
             ChangeBgDotsColorToPurple();
+#endif
         return LT_INC_AND_PAUSE;
     case 3:
         if (FreeTempTileDataBuffersIfPossible())
@@ -794,10 +1007,38 @@ static u32 LoopedTask_OpenPokenavFeature(s32 state)
 static void LoadPokenavOptionPalettes(void)
 {
     s32 i;
-
+#ifdef PLATFORM_PC
+    size_t size;
+    if (!sPokenavOptionsSpriteSheets[0].data)
+    {
+        sPokenavOptionsSpriteSheets[0].data = AssetsLoadFile("graphics/pokenav/options/options.bin", &size);
+        sPokenavOptionsSpriteSheets[0].size = (u16)size;
+    }
+    if (!sPokenavOptionsSpriteSheets[1].data)
+    {
+        sPokenavOptionsSpriteSheets[1].data = LoadMatchCallBlueLightTiles(&size);
+        sPokenavOptionsSpriteSheets[1].size = (u16)size;
+    }
+    for (i = 0; i < ARRAY_COUNT(sPokenavOptionsSpriteSheets); i++)
+        if (sPokenavOptionsSpriteSheets[i].data)
+            LoadSpriteSheet(&sPokenavOptionsSpriteSheets[i]);
+    if (!sPokenavOptionsSpritePalettes[0].data)
+    {
+        const u16 *pal = AssetsLoadPal("graphics/pokenav/options/options.pal", NULL);
+        sPokenavOptionsSpritePalettes[0].data = pal + 0x00;
+        sPokenavOptionsSpritePalettes[1].data = pal + 0x10;
+        sPokenavOptionsSpritePalettes[2].data = pal + 0x20;
+        sPokenavOptionsSpritePalettes[3].data = pal + 0x30;
+        sPokenavOptionsSpritePalettes[4].data = pal + 0x40;
+    }
+    if (!sPokenavOptionsSpritePalettes[5].data)
+        sPokenavOptionsSpritePalettes[5].data = LoadMatchCallBlueLightPal(NULL);
+    Pokenav_AllocAndLoadPalettes(sPokenavOptionsSpritePalettes);
+#else
     for (i = 0; i < ARRAY_COUNT(sPokenavOptionsSpriteSheets); i++)
         LoadCompressedSpriteSheet(&sPokenavOptionsSpriteSheets[i]);
     Pokenav_AllocAndLoadPalettes(sPokenavOptionsSpritePalettes);
+#endif
 }
 
 static void FreeAndDestroyMainMenuSprites(void)
