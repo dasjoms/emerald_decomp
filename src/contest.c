@@ -42,6 +42,9 @@
 #include "constants/moves.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 // This file's functions.
 static void LoadContestPalettes(void);
@@ -684,7 +687,17 @@ static const struct SpriteTemplate sSpriteTemplate_JudgeSpeechBubble =
     .callback = SpriteCallbackDummy
 };
 
+#ifdef PLATFORM_PC
+static const u16 *LoadContestTextPal(void)
+{
+    static const u16 *sPal;
+    if (!sPal)
+        sPal = AssetsLoadPal("graphics/contest/text.pal", NULL);
+    return sPal;
+}
+#else
 static const u16 sText_Pal[] = INCBIN_U16("graphics/contest/text.gbapal");
+#endif
 
 #include "data/contest_text_tables.h"
 
@@ -1075,7 +1088,19 @@ static void LoadContestPalettes(void)
 {
     s32 i;
 
-    LoadPalette(sText_Pal, BG_PLTT_ID(15), sizeof(sText_Pal));
+    LoadPalette(
+#ifdef PLATFORM_PC
+                LoadContestTextPal(),
+#else
+                sText_Pal,
+#endif
+                BG_PLTT_ID(15),
+#ifdef PLATFORM_PC
+                PLTT_SIZEOF(16)
+#else
+                sizeof(sText_Pal)
+#endif
+    );
     SetBackdropFromColor(RGB_BLACK);
     for (i = 10; i < 14; i++)
         LoadPalette(&gPlttBufferUnfaded[BG_PLTT_ID(15) + 1], BG_PLTT_ID(15) + i, PLTT_SIZEOF(1));

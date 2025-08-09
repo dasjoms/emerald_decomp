@@ -29,6 +29,9 @@
 #include "constants/items.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 // There are 4 windows used in berry tag screen.
 enum
@@ -92,7 +95,17 @@ static const struct BgTemplate sBackgroundTemplates[] =
   }
 };
 
+#ifdef PLATFORM_PC
+static const u16 *LoadBerryTagScreenPal(void)
+{
+    static const u16 *sPal;
+    if (!sPal)
+        sPal = AssetsLoadPal("graphics/bag/berry_tag_screen.pal", NULL);
+    return sPal;
+}
+#else
 static const u16 sFontPalette[] = INCBIN_U16("graphics/bag/berry_tag_screen.gbapal");
+#endif
 
 static const u8 sTextColors[2][3] =
 {
@@ -370,7 +383,19 @@ static void HandleInitWindows(void)
 
     InitWindows(sWindowTemplates);
     DeactivateAllTextPrinters();
-    LoadPalette(sFontPalette, BG_PLTT_ID(15), sizeof(sFontPalette));
+    LoadPalette(
+#ifdef PLATFORM_PC
+                LoadBerryTagScreenPal(),
+#else
+                sFontPalette,
+#endif
+                BG_PLTT_ID(15),
+#ifdef PLATFORM_PC
+                PLTT_SIZEOF(16)
+#else
+                sizeof(sFontPalette)
+#endif
+    );
     for (i = 0; i < ARRAY_COUNT(sWindowTemplates) - 1; i++)
         PutWindowTilemap(i);
     ScheduleBgCopyTilemapToVram(0);
