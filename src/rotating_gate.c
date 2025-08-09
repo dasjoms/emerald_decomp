@@ -7,6 +7,10 @@
 #include "sound.h"
 #include "sprite.h"
 #include "constants/songs.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#include <stdio.h>
+#endif
 
 #define ROTATING_GATE_TILE_TAG 0x1300
 #define ROTATING_GATE_PUZZLE_MAX 12
@@ -224,7 +228,38 @@ static const struct RotatingGatePuzzle sRotatingGate_TrickHousePuzzleConfig[] =
 // using vars outside the temp vars. Aside from potentially reading/writing vars being used for
 // something else, using vars that persist when exiting the map could softlock the puzzle.
 STATIC_ASSERT(MAX_GATES <= (2 * NUM_TEMP_VARS), TooManyRotatingGates)
+#ifdef PLATFORM_PC
+#define NUM_ROTATING_GATE_SHAPES (GATE_SHAPE_T4 + 1)
 
+static const char *const sRotatingGateShapeNames[NUM_ROTATING_GATE_SHAPES] =
+{
+    [GATE_SHAPE_L1] = "l1",
+    [GATE_SHAPE_L2] = "l2",
+    [GATE_SHAPE_L3] = "l3",
+    [GATE_SHAPE_L4] = "l4",
+    [GATE_SHAPE_T1] = "t1",
+    [GATE_SHAPE_T2] = "t2",
+    [GATE_SHAPE_T3] = "t3",
+    [GATE_SHAPE_T4] = "t4",
+};
+
+static const u8 *sRotatingGateTiles[NUM_ROTATING_GATE_SHAPES];
+static size_t sRotatingGateTilesSizes[NUM_ROTATING_GATE_SHAPES];
+static struct SpriteSheet sRotatingGatesGraphicsTable[NUM_ROTATING_GATE_SHAPES + 1];
+
+static const u8 *LoadRotatingGateTiles(u8 id, size_t *size)
+{
+    if (!sRotatingGateTiles[id])
+    {
+        char path[64];
+        snprintf(path, sizeof(path), "graphics/rotating_gates/%s.png", sRotatingGateShapeNames[id]);
+        sRotatingGateTiles[id] = AssetsLoad4bpp(path, NULL, &sRotatingGateTilesSizes[id]);
+    }
+    if (size)
+        *size = sRotatingGateTilesSizes[id];
+    return sRotatingGateTiles[id];
+}
+#else
 static const u8 sRotatingGateTiles_1[] = INCBIN_U8("graphics/rotating_gates/l1.4bpp");
 static const u8 sRotatingGateTiles_2[] = INCBIN_U8("graphics/rotating_gates/l2.4bpp");
 static const u8 sRotatingGateTiles_3[] = INCBIN_U8("graphics/rotating_gates/l3.4bpp");
@@ -233,6 +268,7 @@ static const u8 sRotatingGateTiles_5[] = INCBIN_U8("graphics/rotating_gates/t1.4
 static const u8 sRotatingGateTiles_6[] = INCBIN_U8("graphics/rotating_gates/t2.4bpp");
 static const u8 sRotatingGateTiles_7[] = INCBIN_U8("graphics/rotating_gates/t3.4bpp");
 static const u8 sRotatingGateTiles_8[] = INCBIN_U8("graphics/rotating_gates/t4.4bpp");
+#endif
 
 static const struct OamData sOamData_RotatingGateLarge =
 {
@@ -268,6 +304,7 @@ static const struct OamData sOamData_RotatingGateRegular =
     .affineParam = 0,
 };
 
+#ifndef PLATFORM_PC
 static const struct SpriteSheet sRotatingGatesGraphicsTable[] =
 {
     {sRotatingGateTiles_1, sizeof(sRotatingGateTiles_1), ROTATING_GATE_TILE_TAG + GATE_SHAPE_L1},
@@ -280,6 +317,7 @@ static const struct SpriteSheet sRotatingGatesGraphicsTable[] =
     {sRotatingGateTiles_8, sizeof(sRotatingGateTiles_8), ROTATING_GATE_TILE_TAG + GATE_SHAPE_T4},
     {NULL},
 };
+#endif
 
 static const union AnimCmd sSpriteAnim_RotatingGateLarge[] =
 {
@@ -816,6 +854,17 @@ static void RotatingGate_HideGatesOutsideViewport(struct Sprite *sprite)
 
 static void LoadRotatingGatePics(void)
 {
+#ifdef PLATFORM_PC
+    s32 i;
+    for (i = 0; i < NUM_ROTATING_GATE_SHAPES; i++)
+    {
+        size_t size;
+        sRotatingGatesGraphicsTable[i].data = LoadRotatingGateTiles(i, &size);
+        sRotatingGatesGraphicsTable[i].size = size;
+        sRotatingGatesGraphicsTable[i].tag = ROTATING_GATE_TILE_TAG + i;
+    }
+    sRotatingGatesGraphicsTable[NUM_ROTATING_GATE_SHAPES].data = NULL;
+#endif
     LoadSpriteSheets(sRotatingGatesGraphicsTable);
 }
 
