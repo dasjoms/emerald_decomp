@@ -29,6 +29,10 @@
 #include "main.h"
 #include "constants/event_objects.h"
 #include "constants/rgb.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+static struct SpriteFrameImage sImageTable_PCIcon[2];
+#endif
 
 enum {
     INPUT_NONE,
@@ -181,11 +185,45 @@ struct NamingScreenData
 };
 
 EWRAM_DATA static struct NamingScreenData *sNamingScreen = NULL;
+#ifdef PLATFORM_PC
+static void LoadPCIconGfx(void)
+{
+    static bool8 sLoaded;
+    size_t size;
+    if (!sLoaded)
+    {
+        sImageTable_PCIcon[0].data = AssetsLoad4bpp("graphics/naming_screen/pc_icon_off.png", NULL, &size);
+        sImageTable_PCIcon[0].size = size;
+        sImageTable_PCIcon[1].data = AssetsLoad4bpp("graphics/naming_screen/pc_icon_on.png", NULL, &size);
+        sImageTable_PCIcon[1].size = size;
+        sLoaded = TRUE;
+    }
+}
 
+static const u16 *LoadKeyboardPal(size_t *size)
+{
+    static const u16 *sPal;
+    static size_t sSize;
+    if (!sPal)
+        sPal = AssetsLoadPal("graphics/naming_screen/keyboard.pal", &sSize);
+    if (size)
+        *size = sSize;
+    return sPal;
+}
+
+static const u16 *LoadRivalPal(void)
+{
+    static const u16 *sPal;
+    if (!sPal)
+        sPal = AssetsLoadPal("graphics/naming_screen/rival.pal", NULL);
+    return sPal;
+}
+#else
 static const u8 sPCIconOff_Gfx[] = INCBIN_U8("graphics/naming_screen/pc_icon_off.4bpp");
 static const u8 sPCIconOn_Gfx[] = INCBIN_U8("graphics/naming_screen/pc_icon_on.4bpp");
 static const u16 sKeyboard_Pal[] = INCBIN_U16("graphics/naming_screen/keyboard.gbapal");
 static const u16 sRival_Pal[] = INCBIN_U16("graphics/naming_screen/rival.gbapal"); // Unused, leftover from FRLG rival
+#endif
 
 static const u8 *const sTransferredToPCMessages[] =
 {
@@ -1407,7 +1445,9 @@ static void NamingScreen_CreatePlayerIcon(void)
 static void NamingScreen_CreatePCIcon(void)
 {
     u8 spriteId;
-
+#ifdef PLATFORM_PC
+    LoadPCIconGfx();
+#endif
     spriteId = CreateSprite(&sSpriteTemplate_PCIcon, 56, 41, 0);
     SetSubspriteTables(&gSprites[spriteId], sSubspriteTable_PCIcon);
     gSprites[spriteId].oam.priority = 3;
@@ -1881,7 +1921,15 @@ static void CreateHelperTasks(void)
 static void LoadPalettes(void)
 {
     LoadPalette(gNamingScreenMenu_Pal, BG_PLTT_ID(0), sizeof(gNamingScreenMenu_Pal));
+#ifdef PLATFORM_PC
+    {
+        size_t size;
+        const u16 *pal = LoadKeyboardPal(&size);
+        LoadPalette(pal, BG_PLTT_ID(10), size);
+    }
+#else
     LoadPalette(sKeyboard_Pal, BG_PLTT_ID(10), sizeof(sKeyboard_Pal));
+#endif
     LoadPalette(GetTextWindowPalette(2), BG_PLTT_ID(11), PLTT_SIZE_4BPP);
 }
 
@@ -2389,11 +2437,13 @@ static const struct SubspriteTable sSubspriteTable_PCIcon[] =
     {ARRAY_COUNT(sSubsprites_PCIcon), sSubsprites_PCIcon}
 };
 
+#ifndef PLATFORM_PC
 static const struct SpriteFrameImage sImageTable_PCIcon[] =
 {
     {sPCIconOff_Gfx, sizeof(sPCIconOff_Gfx)},
     {sPCIconOn_Gfx, sizeof(sPCIconOn_Gfx)},
 };
+#endif
 
 static const union AnimCmd sAnim_Loop[] =
 {
