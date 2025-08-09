@@ -29,8 +29,13 @@ void DoWateringBerryTreeAnim(void);
 u8 CreateRecordMixingLights(void);
 void DestroyRecordMixingLights(void);
 
+#ifdef PLATFORM_PC
+extern struct SpritePalette gSpritePalette_SecretPower_Cave;
+extern struct SpritePalette gSpritePalette_SecretPower_Plant;
+#else
 extern const struct SpritePalette gSpritePalette_SecretPower_Cave;
 extern const struct SpritePalette gSpritePalette_SecretPower_Plant;
+#endif
 extern const struct SpritePalette gFieldEffectObjectPaletteInfo9;
 extern const u16 gTilesetPalettes_SecretBase[][16];
 
