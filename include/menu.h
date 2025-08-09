@@ -40,7 +40,12 @@ struct MenuAction
     } func;
 };
 
+#ifdef PLATFORM_PC
+const u16 *LoadStandardMenuPalette(void);
+#define gStandardMenuPalette LoadStandardMenuPalette()
+#else
 extern const u16 gStandardMenuPalette[];
+#endif
 
 void FreeAllOverworldWindowBuffers(void);
 void InitStandardTextBoxWindows(void);

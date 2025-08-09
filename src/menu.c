@@ -72,7 +72,28 @@ static EWRAM_DATA bool8 sScheduledBgCopiesToVram[4] = {FALSE};
 static EWRAM_DATA u16 sTempTileDataBufferIdx = 0;
 static EWRAM_DATA void *sTempTileDataBuffer[0x20] = {NULL};
 
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+
+const u16 *LoadStandardMenuPalette(void)
+{
+    static const u16 *sPal;
+    if (!sPal)
+        sPal = AssetsLoadPal("graphics/interface/std_menu.pal", NULL);
+    return sPal;
+}
+
+static const u16 *LoadHofPCTopBarPal(void)
+{
+    static const u16 *sPal;
+    if (!sPal)
+        sPal = AssetsLoadPal("graphics/interface/hof_pc_topbar.pal", NULL);
+    return sPal;
+}
+#else
 const u16 gStandardMenuPalette[] = INCBIN_U16("graphics/interface/std_menu.gbapal");
+static const u16 sHofPC_TopBar_Pal[] = INCBIN_U16("graphics/interface/hof_pc_topbar.gbapal");
+#endif
 
 static const u8 sTextSpeedFrameDelays[] =
 {
@@ -106,7 +127,6 @@ static const struct WindowTemplate sYesNo_WindowTemplates =
     .baseBlock = 0x125
 };
 
-static const u16 sHofPC_TopBar_Pal[] = INCBIN_U16("graphics/interface/hof_pc_topbar.gbapal");
 static const u8 sTextColors[] = { TEXT_DYNAMIC_COLOR_6, TEXT_COLOR_WHITE, TEXT_COLOR_DARK_GRAY };
 
 // Table of move info icon offsets in graphics/interface/menu_info.png
@@ -806,7 +826,11 @@ u8 HofPCTopBar_AddWindow(u8 bg, u8 xPos, u8 yPos, u8 palette, u16 baseTile)
     else
         palette = BG_PLTT_ID(palette);
 
+#ifdef PLATFORM_PC
+    LoadPalette(LoadHofPCTopBarPal(), palette, PLTT_SIZE_4BPP);
+#else
     LoadPalette(sHofPC_TopBar_Pal, palette, sizeof(sHofPC_TopBar_Pal));
+#endif
     return sHofPCTopBarWindowId;
 }
 

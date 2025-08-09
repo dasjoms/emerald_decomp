@@ -4113,7 +4113,12 @@ extern const u32 gBattlePyramidBagTilemap[];
 extern const u32 gBattlePyramidBagInterface_Pal[];
 extern const u16 gBattlePyramidFloor_Pal[][16];
 
+#ifdef PLATFORM_PC
+const u16 *LoadStandardMenuPalette(void);
+#define gStandardMenuPalette LoadStandardMenuPalette()
+#else
 extern const u16 gStandardMenuPalette[];
+#endif
 
 extern const u32 gTitleScreenEmeraldVersionGfx[];
 extern const u32 gTitleScreenPressStartGfx[];
