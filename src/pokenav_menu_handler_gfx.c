@@ -322,30 +322,6 @@ static const LoopedTask sMenuHandlerLoopTaskFuncs[] =
     [POKENAV_MENU_FUNC_OPEN_FEATURE]          = LoopedTask_OpenPokenavFeature
 };
 
-static const struct CompressedSpriteSheet sPokenavOptionsSpriteSheets[] =
-{
-    {
-        .data = gPokenavOptions_Gfx,
-        .size = 0x3400,
-        .tag = GFXTAG_OPTIONS
-    },
-    {
-        .data = sMatchCallBlueLightTiles,
-        .size = 0x0100,
-        .tag = GFXTAG_BLUE_LIGHT
-    }
-};
-
-static const struct SpritePalette sPokenavOptionsSpritePalettes[] =
-{
-    {&gPokenavOptions_Pal[0x00], PALTAG_OPTIONS_DEFAULT},
-    {&gPokenavOptions_Pal[0x10], PALTAG_OPTIONS_BLUE},
-    {&gPokenavOptions_Pal[0x20], PALTAG_OPTIONS_PINK},
-    {&gPokenavOptions_Pal[0x30], PALTAG_OPTIONS_BEIGE},
-    {&gPokenavOptions_Pal[0x40], PALTAG_OPTIONS_RED},
-    {sMatchCallBlueLightPal, PALTAG_BLUE_LIGHT},
-    {}
-};
 
 // Tile number, palette tag offset
 static const u16 sOptionsLabelGfx_RegionMap[] = {0x000, PALTAG_OPTIONS_DEFAULT - PALTAG_OPTIONS_START};

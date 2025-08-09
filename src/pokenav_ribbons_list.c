@@ -72,10 +72,63 @@ static const LoopedTask sMonRibbonListLoopTaskFuncs[] =
     BuildBoxMonRibbonList
 };
 
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+
+static const u16 *LoadMonRibbonListFramePal(size_t *size)
+{
+    static const u16 *pal;
+    static size_t palSize;
+    if (!pal)
+        pal = AssetsGetPNGPalette("graphics/pokenav/ribbons/list_bg.png", &palSize);
+    if (size)
+        *size = palSize;
+    return pal;
+}
+
+static const u8 *LoadMonRibbonListFrameTiles(size_t *size)
+{
+    static const u8 *tiles;
+    static size_t tilesSize;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/pokenav/ribbons/list_bg.png", NULL, &tilesSize);
+    if (size)
+        *size = tilesSize;
+    return tiles;
+}
+
+static const u16 *LoadMonRibbonListFrameTilemap(size_t *size)
+{
+    static const u16 *map;
+    static size_t mapSize;
+    if (!map)
+        map = AssetsLoadFile("graphics/pokenav/ribbons/list_bg.bin", &mapSize);
+    if (size)
+        *size = mapSize;
+    return map;
+}
+
+static const u16 *LoadMonRibbonListUiPal(size_t *size)
+{
+    static const u16 *pal;
+    static size_t palSize;
+    if (!pal)
+        pal = AssetsLoadPal("graphics/pokenav/ribbons/list_ui.pal", &palSize);
+    if (size)
+        *size = palSize;
+    return pal;
+}
+
+#define sMonRibbonListFramePal      LoadMonRibbonListFramePal(NULL)
+#define sMonRibbonListFrameTiles    LoadMonRibbonListFrameTiles(NULL)
+#define sMonRibbonListFrameTilemap  LoadMonRibbonListFrameTilemap(NULL)
+#define sMonRibbonListUi_Pal        LoadMonRibbonListUiPal(NULL)
+#else
 static const u16 sMonRibbonListFramePal[] = INCBIN_U16("graphics/pokenav/ribbons/list_bg.gbapal");
 static const u32 sMonRibbonListFrameTiles[] = INCBIN_U32("graphics/pokenav/ribbons/list_bg.4bpp.lz");
 static const u32 sMonRibbonListFrameTilemap[] = INCBIN_U32("graphics/pokenav/ribbons/list_bg.bin.lz");
 static const u16 sMonRibbonListUi_Pal[] = INCBIN_U16("graphics/pokenav/ribbons/list_ui.gbapal");
+#endif
 
 static const struct BgTemplate sMonRibbonListBgTemplates[] =
 {
