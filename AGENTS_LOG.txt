@@ -46,3 +46,4 @@
 - Converted Reset RTC screen cursor arrows to load PNG graphics and palette at runtime on PC builds, removing INCBIN data for the arrow sprites.
 - Converted contest results screen text window assets to runtime-loaded PNG graphics and palette for PC builds, eliminating embedded INCBIN data.
 - Converted Pokénav Match Call window and icon assets to load PNG graphics and palettes at runtime for PC builds, removing INCBIN dependencies.
+- Converted remaining Pokénav Match Call interface assets to load tiles, tilemaps, and palettes from external PNGs at runtime on PC builds, removing INCBIN references for the UI, cursor, windows, and Pokéball icons.
