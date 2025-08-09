@@ -144,6 +144,69 @@ struct
 #include "data/text/ribbon_descriptions.h"
 #include "data/text/gift_ribbon_descriptions.h"
 
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+
+static const u16 *LoadRibbonIconsPal(size_t *size, int index)
+{
+    static const u16 *pals[5];
+    static size_t palSizes[5];
+    static const char *paths[5] = {
+        "graphics/pokenav/ribbons/icons1.pal",
+        "graphics/pokenav/ribbons/icons2.pal",
+        "graphics/pokenav/ribbons/icons3.pal",
+        "graphics/pokenav/ribbons/icons4.pal",
+        "graphics/pokenav/ribbons/icons5.pal",
+    };
+    if (!pals[index])
+        pals[index] = AssetsLoadPal(paths[index], &palSizes[index]);
+    if (size)
+        *size = palSizes[index];
+    return pals[index];
+}
+
+static const u16 *LoadMonInfoPal(size_t *size)
+{
+    static const u16 *pal;
+    static size_t palSize;
+    if (!pal)
+        pal = AssetsLoadPal("graphics/pokenav/ribbons/mon_info.pal", &palSize);
+    if (size)
+        *size = palSize;
+    return pal;
+}
+
+static const u8 *LoadRibbonIconsSmallGfx(size_t *size)
+{
+    static const u8 *tiles;
+    static size_t tilesSize;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/pokenav/ribbons/icons.png", NULL, &tilesSize);
+    if (size)
+        *size = tilesSize;
+    return tiles;
+}
+
+static const u8 *LoadRibbonIconsBigGfx(size_t *size)
+{
+    static const u8 *tiles;
+    static size_t tilesSize;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/pokenav/ribbons/icons_big.png", NULL, &tilesSize);
+    if (size)
+        *size = tilesSize;
+    return tiles;
+}
+
+#define sRibbonIcons1_Pal    LoadRibbonIconsPal(NULL, 0)
+#define sRibbonIcons2_Pal    LoadRibbonIconsPal(NULL, 1)
+#define sRibbonIcons3_Pal    LoadRibbonIconsPal(NULL, 2)
+#define sRibbonIcons4_Pal    LoadRibbonIconsPal(NULL, 3)
+#define sRibbonIcons5_Pal    LoadRibbonIconsPal(NULL, 4)
+#define sMonInfo_Pal         LoadMonInfoPal(NULL)
+#define sRibbonIconsSmall_Gfx LoadRibbonIconsSmallGfx(NULL)
+#define sRibbonIconsBig_Gfx  LoadRibbonIconsBigGfx(NULL)
+#else
 static const u16 sRibbonIcons1_Pal[] = INCBIN_U16("graphics/pokenav/ribbons/icons1.gbapal");
 static const u16 sRibbonIcons2_Pal[] = INCBIN_U16("graphics/pokenav/ribbons/icons2.gbapal");
 static const u16 sRibbonIcons3_Pal[] = INCBIN_U16("graphics/pokenav/ribbons/icons3.gbapal");
@@ -152,6 +215,7 @@ static const u16 sRibbonIcons5_Pal[] = INCBIN_U16("graphics/pokenav/ribbons/icon
 static const u16 sMonInfo_Pal[] = INCBIN_U16("graphics/pokenav/ribbons/mon_info.gbapal"); // palette for Pokémon's name/gender/level text
 static const u32 sRibbonIconsSmall_Gfx[] = INCBIN_U32("graphics/pokenav/ribbons/icons.4bpp.lz");
 static const u32 sRibbonIconsBig_Gfx[] = INCBIN_U32("graphics/pokenav/ribbons/icons_big.4bpp.lz");
+#endif
 
 static const struct BgTemplate sBgTemplates[] =
 {
@@ -1135,6 +1199,22 @@ static void BufferSmallRibbonGfxData(u16 *dst, u32 ribbonId)
     dst[3] = (tileNum + 1) | (palNum << 12) | 0x400;
 }
 
+#ifdef PLATFORM_PC
+static struct CompressedSpriteSheet sSpriteSheet_RibbonIconsBig =
+{
+    NULL, 0x1800, GFXTAG_RIBBON_ICONS_BIG
+};
+
+static struct SpritePalette sSpritePalettes_RibbonIcons[] =
+{
+    { NULL, PALTAG_RIBBON_ICONS_1 },
+    { NULL, PALTAG_RIBBON_ICONS_2 },
+    { NULL, PALTAG_RIBBON_ICONS_3 },
+    { NULL, PALTAG_RIBBON_ICONS_4 },
+    { NULL, PALTAG_RIBBON_ICONS_5 },
+    {},
+};
+#else
 static const struct CompressedSpriteSheet sSpriteSheet_RibbonIconsBig =
 {
     sRibbonIconsBig_Gfx, 0x1800, GFXTAG_RIBBON_ICONS_BIG
@@ -1149,6 +1229,7 @@ static const struct SpritePalette sSpritePalettes_RibbonIcons[] =
     {sRibbonIcons5_Pal, PALTAG_RIBBON_ICONS_5},
     {},
 };
+#endif
 
 static const struct OamData sOamData_RibbonIconBig =
 {
@@ -1216,6 +1297,22 @@ static void CreateBigRibbonSprite(struct Pokenav_RibbonsSummaryMenu *menu)
 {
     u8 spriteId;
 
+#ifdef PLATFORM_PC
+    size_t size;
+    if (!sSpriteSheet_RibbonIconsBig.data)
+    {
+        sSpriteSheet_RibbonIconsBig.data = (const void *)LoadRibbonIconsBigGfx(&size);
+        sSpriteSheet_RibbonIconsBig.size = (u16)size;
+    }
+    if (!sSpritePalettes_RibbonIcons[0].data)
+    {
+        sSpritePalettes_RibbonIcons[0].data = LoadRibbonIconsPal(NULL, 0);
+        sSpritePalettes_RibbonIcons[1].data = LoadRibbonIconsPal(NULL, 1);
+        sSpritePalettes_RibbonIcons[2].data = LoadRibbonIconsPal(NULL, 2);
+        sSpritePalettes_RibbonIcons[3].data = LoadRibbonIconsPal(NULL, 3);
+        sSpritePalettes_RibbonIcons[4].data = LoadRibbonIconsPal(NULL, 4);
+    }
+#endif
     LoadCompressedSpriteSheet(&sSpriteSheet_RibbonIconsBig);
     Pokenav_AllocAndLoadPalettes(sSpritePalettes_RibbonIcons);
 
