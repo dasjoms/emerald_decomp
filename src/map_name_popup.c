@@ -16,6 +16,10 @@
 #include "constants/layouts.h"
 #include "constants/region_map_sections.h"
 #include "constants/weather.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#include <stdio.h>
+#endif
 
 // enums
 enum MapPopUp_Themes
@@ -28,6 +32,8 @@ enum MapPopUp_Themes
     MAPPOPUP_THEME_STONE2,
 };
 
+#define NUM_MAP_POPUP_THEMES (MAPPOPUP_THEME_STONE2 + 1)
+
 // static functions
 static void Task_MapNamePopUpWindow(u8 taskId);
 static void ShowMapNamePopUpWindow(void);
@@ -37,6 +43,52 @@ static void LoadMapNamePopUpWindowBg(void);
 static EWRAM_DATA u8 sPopupTaskId = 0;
 
 // .rodata
+#ifdef PLATFORM_PC
+static const char *const sMapPopUpThemeNames[NUM_MAP_POPUP_THEMES] =
+{
+    [MAPPOPUP_THEME_WOOD] = "wood",
+    [MAPPOPUP_THEME_MARBLE] = "marble",
+    [MAPPOPUP_THEME_STONE] = "stone",
+    [MAPPOPUP_THEME_BRICK] = "brick",
+    [MAPPOPUP_THEME_UNDERWATER] = "underwater",
+    [MAPPOPUP_THEME_STONE2] = "stone2",
+};
+
+static const u8 *sMapPopUp_Table[NUM_MAP_POPUP_THEMES];
+static const u8 *sMapPopUp_OutlineTable[NUM_MAP_POPUP_THEMES];
+static size_t sMapPopUp_OutlineSizes[NUM_MAP_POPUP_THEMES];
+static const u16 *sMapPopUp_PaletteTable[NUM_MAP_POPUP_THEMES];
+static const u16 *sMapPopUp_Palette_Underwater;
+
+static void LoadMapPopUpAssets(u8 theme)
+{
+    char path[64];
+    if (!sMapPopUp_Table[theme])
+    {
+        snprintf(path, sizeof(path), "graphics/map_popup/%s.png", sMapPopUpThemeNames[theme]);
+        sMapPopUp_Table[theme] = AssetsLoad4bpp(path, NULL, NULL);
+    }
+    if (!sMapPopUp_OutlineTable[theme])
+    {
+        snprintf(path, sizeof(path), "graphics/map_popup/%s_outline.png", sMapPopUpThemeNames[theme]);
+        sMapPopUp_OutlineTable[theme] = AssetsLoad4bpp(path, NULL, &sMapPopUp_OutlineSizes[theme]);
+    }
+    if (!sMapPopUp_PaletteTable[theme])
+    {
+        if (theme == MAPPOPUP_THEME_WOOD)
+            snprintf(path, sizeof(path), "graphics/map_popup/wood.png");
+        else
+            snprintf(path, sizeof(path), "graphics/map_popup/%s_outline.png", sMapPopUpThemeNames[theme]);
+        sMapPopUp_PaletteTable[theme] = AssetsGetPNGPalette(path, NULL);
+    }
+}
+
+static void LoadUnderwaterPalette(void)
+{
+    if (!sMapPopUp_Palette_Underwater)
+        sMapPopUp_Palette_Underwater = AssetsLoadPal("graphics/map_popup/underwater.pal", NULL);
+}
+#else
 static const u8 sMapPopUp_Table[][960] =
 {
     [MAPPOPUP_THEME_WOOD]       = INCBIN_U8("graphics/map_popup/wood.4bpp"),
@@ -68,6 +120,7 @@ static const u16 sMapPopUp_PaletteTable[][16] =
 };
 
 static const u16 sMapPopUp_Palette_Underwater[16] = INCBIN_U16("graphics/map_popup/underwater.gbapal");
+#endif
 
 // -1 in the size excludes MAPSEC_NONE.
 // The MAPSEC values for Kanto (between MAPSEC_DYNAMIC and MAPSEC_AQUA_HIDEOUT) are also excluded,
@@ -414,7 +467,22 @@ static void LoadMapNamePopUpWindowBg(void)
             regionMapSectionId = 0; // Discard kanto region sections;
     }
     popUpThemeId = sMapSectionToThemeId[regionMapSectionId];
-
+#ifdef PLATFORM_PC
+    LoadMapPopUpAssets(popUpThemeId);
+    LoadBgTiles(GetWindowAttribute(popupWindowId, WINDOW_BG), sMapPopUp_OutlineTable[popUpThemeId], (u16)sMapPopUp_OutlineSizes[popUpThemeId], 0x21D);
+    CallWindowFunction(popupWindowId, DrawMapNamePopUpFrame);
+    PutWindowTilemap(popupWindowId);
+    if (gMapHeader.weather == WEATHER_UNDERWATER_BUBBLES)
+    {
+        LoadUnderwaterPalette();
+        LoadPalette(sMapPopUp_Palette_Underwater, BG_PLTT_ID(14), 16 * sizeof(u16));
+    }
+    else
+    {
+        LoadPalette(sMapPopUp_PaletteTable[popUpThemeId], BG_PLTT_ID(14), 16 * sizeof(u16));
+    }
+    BlitBitmapToWindow(popupWindowId, sMapPopUp_Table[popUpThemeId], 0, 0, 80, 24);
+#else
     LoadBgTiles(GetWindowAttribute(popupWindowId, WINDOW_BG), sMapPopUp_OutlineTable[popUpThemeId], 0x400, 0x21D);
     CallWindowFunction(popupWindowId, DrawMapNamePopUpFrame);
     PutWindowTilemap(popupWindowId);
@@ -423,4 +491,5 @@ static void LoadMapNamePopUpWindowBg(void)
     else
         LoadPalette(sMapPopUp_PaletteTable[popUpThemeId], BG_PLTT_ID(14), sizeof(sMapPopUp_PaletteTable[0]));
     BlitBitmapToWindow(popupWindowId, sMapPopUp_Table[popUpThemeId], 0, 0, 80, 24);
+#endif
 }
