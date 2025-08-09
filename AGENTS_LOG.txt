@@ -53,3 +53,4 @@
 - Converted Pokénav list arrow graphics and palette to load from PNG at runtime on PC builds, eliminating remaining INCBIN data in pokenav_list.c.
 - Converted standard menu and Hall of Fame PC top bar palettes to load from external .pal files on PC builds, removing INCBIN data from menu.c and enabling runtime palette loading.
 - Converted main menu background and text palettes to load from external .pal files at runtime on PC builds, removing INCBIN data from main_menu.c.
+- Converted trainer emotion icons to load PNG graphics at runtime on PC builds, replacing embedded INCBIN data in trainer_see.c.

@@ -18,6 +18,9 @@
 #include "constants/event_object_movement.h"
 #include "constants/field_effects.h"
 #include "constants/trainer_types.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 // this file's functions
 static u8 CheckTrainer(u8 objectEventId);
@@ -59,9 +62,40 @@ COMMON_DATA bool8 gTrainerApproachedPlayer = 0;
 EWRAM_DATA u8 gApproachingTrainerId = 0;
 
 // const rom data
+#ifdef PLATFORM_PC
+static const u8 *sEmotion_ExclamationMarkGfx;
+static const u8 *sEmotion_QuestionMarkGfx;
+static const u8 *sEmotion_HeartGfx;
+static struct SpriteFrameImage sSpriteImageTable_ExclamationQuestionMark[2];
+static struct SpriteFrameImage sSpriteImageTable_HeartIcon[1];
+
+static void LoadEmotionIcons(void)
+{
+    size_t size;
+    if (!sEmotion_ExclamationMarkGfx)
+    {
+        sEmotion_ExclamationMarkGfx = AssetsLoad4bpp("graphics/field_effects/pics/emotion_exclamation.png", NULL, &size);
+        sSpriteImageTable_ExclamationQuestionMark[0].data = sEmotion_ExclamationMarkGfx;
+        sSpriteImageTable_ExclamationQuestionMark[0].size = size;
+    }
+    if (!sEmotion_QuestionMarkGfx)
+    {
+        sEmotion_QuestionMarkGfx = AssetsLoad4bpp("graphics/field_effects/pics/emotion_question.png", NULL, &size);
+        sSpriteImageTable_ExclamationQuestionMark[1].data = sEmotion_QuestionMarkGfx;
+        sSpriteImageTable_ExclamationQuestionMark[1].size = size;
+    }
+    if (!sEmotion_HeartGfx)
+    {
+        sEmotion_HeartGfx = AssetsLoad4bpp("graphics/field_effects/pics/emotion_heart.png", NULL, &size);
+        sSpriteImageTable_HeartIcon[0].data = sEmotion_HeartGfx;
+        sSpriteImageTable_HeartIcon[0].size = size;
+    }
+}
+#else
 static const u8 sEmotion_ExclamationMarkGfx[] = INCBIN_U8("graphics/field_effects/pics/emotion_exclamation.4bpp");
 static const u8 sEmotion_QuestionMarkGfx[] = INCBIN_U8("graphics/field_effects/pics/emotion_question.4bpp");
 static const u8 sEmotion_HeartGfx[] = INCBIN_U8("graphics/field_effects/pics/emotion_heart.4bpp");
+#endif
 
 static u8 (*const sDirectionalApproachDistanceFuncs[])(struct ObjectEvent *trainerObj, s16 range, s16 x, s16 y) =
 {
@@ -127,6 +161,7 @@ static const struct OamData sOamData_Icons =
     .affineParam = 0,
 };
 
+#ifndef PLATFORM_PC
 static const struct SpriteFrameImage sSpriteImageTable_ExclamationQuestionMark[] =
 {
     {
@@ -146,6 +181,7 @@ static const struct SpriteFrameImage sSpriteImageTable_HeartIcon[] =
         .size = sizeof(sEmotion_HeartGfx)
     }
 };
+#endif
 
 static const union AnimCmd sSpriteAnim_Icons1[] =
 {
@@ -695,6 +731,9 @@ void TryPrepareSecondApproachingTrainer(void)
 
 u8 FldEff_ExclamationMarkIcon(void)
 {
+#ifdef PLATFORM_PC
+    LoadEmotionIcons();
+#endif
     u8 spriteId = CreateSpriteAtEnd(&sSpriteTemplate_ExclamationQuestionMark, 0, 0, 0x53);
 
     if (spriteId != MAX_SPRITES)
@@ -705,6 +744,9 @@ u8 FldEff_ExclamationMarkIcon(void)
 
 u8 FldEff_QuestionMarkIcon(void)
 {
+#ifdef PLATFORM_PC
+    LoadEmotionIcons();
+#endif
     u8 spriteId = CreateSpriteAtEnd(&sSpriteTemplate_ExclamationQuestionMark, 0, 0, 0x52);
 
     if (spriteId != MAX_SPRITES)
@@ -715,6 +757,9 @@ u8 FldEff_QuestionMarkIcon(void)
 
 u8 FldEff_HeartIcon(void)
 {
+#ifdef PLATFORM_PC
+    LoadEmotionIcons();
+#endif
     u8 spriteId = CreateSpriteAtEnd(&sSpriteTemplate_HeartIcon, 0, 0, 0x52);
 
     if (spriteId != MAX_SPRITES)
