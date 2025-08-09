@@ -114,6 +114,96 @@ static u32 ShowCheckPageDown(s32);
 static u32 ExitCheckPage(s32);
 static u32 ExitMatchCall(s32);
 
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+
+static const u16 *LoadMatchCallUIPal(size_t *size)
+{
+    static const u16 *sPal;
+    static size_t sSize;
+    if (!sPal)
+        sPal = AssetsGetPNGPalette("graphics/pokenav/match_call/ui.png", &sSize);
+    if (size)
+        *size = sSize;
+    return sPal;
+}
+
+static const u8 *LoadMatchCallUIGfx(size_t *size)
+{
+    static const u8 *sGfx;
+    static size_t sSize;
+    if (!sGfx)
+        sGfx = AssetsLoad4bpp("graphics/pokenav/match_call/ui.png", NULL, &sSize);
+    if (size)
+        *size = sSize;
+    return sGfx;
+}
+
+static const u32 *LoadMatchCallUITilemap(size_t *size)
+{
+    static const u32 *sMap;
+    static size_t sSize;
+    if (!sMap)
+        sMap = AssetsLoadFile("graphics/pokenav/match_call/ui.bin", &sSize);
+    if (size)
+        *size = sSize;
+    return sMap;
+}
+
+static const u16 *LoadOptionsCursorPal(void)
+{
+    static const u16 *sPal;
+    if (!sPal)
+        sPal = AssetsGetPNGPalette("graphics/pokenav/match_call/options_cursor.png", NULL);
+    return sPal;
+}
+
+static const u8 *LoadOptionsCursorGfx(size_t *size)
+{
+    static const u8 *sGfx;
+    static size_t sSize;
+    if (!sGfx)
+        sGfx = AssetsLoad4bpp("graphics/pokenav/match_call/options_cursor.png", NULL, &sSize);
+    if (size)
+        *size = sSize;
+    return sGfx;
+}
+
+static const u16 *LoadCallWindowPal(void)
+{
+    static const u16 *sPal;
+    if (!sPal)
+        sPal = AssetsLoadPal("graphics/pokenav/match_call/call_window.pal", NULL);
+    return sPal;
+}
+
+static const u16 *LoadListWindowPal(void)
+{
+    static const u16 *sPal;
+    if (!sPal)
+        sPal = AssetsLoadPal("graphics/pokenav/match_call/list_window.pal", NULL);
+    return sPal;
+}
+
+static const u16 *LoadPokeballPal(void)
+{
+    static const u16 *sPal;
+    if (!sPal)
+        sPal = AssetsLoadPal("graphics/pokenav/match_call/pokeball.pal", NULL);
+    return sPal;
+}
+
+static const u8 *LoadPokeballGfx(size_t *size)
+{
+    static const u8 *sGfx;
+    static size_t sSize;
+    if (!sGfx)
+        sGfx = AssetsLoad4bpp("graphics/pokenav/match_call/pokeball.png", "graphics/pokenav/match_call/pokeball.pal", &sSize);
+    if (size)
+        *size = sSize;
+    return sGfx;
+}
+#else
 static const u16 sMatchCallUI_Pal[] = INCBIN_U16("graphics/pokenav/match_call/ui.gbapal");
 static const u32 sMatchCallUI_Gfx[] = INCBIN_U32("graphics/pokenav/match_call/ui.4bpp.lz");
 static const u32 sMatchCallUI_Tilemap[] = INCBIN_U32("graphics/pokenav/match_call/ui.bin.lz");
@@ -123,6 +213,7 @@ static const u16 sCallWindow_Pal[] = INCBIN_U16("graphics/pokenav/match_call/cal
 static const u16 sListWindow_Pal[] = INCBIN_U16("graphics/pokenav/match_call/list_window.gbapal");
 static const u16 sPokeball_Pal[] = INCBIN_U16("graphics/pokenav/match_call/pokeball.gbapal");
 static const u32 sPokeball_Gfx[] = INCBIN_U32("graphics/pokenav/match_call/pokeball.4bpp.lz");
+#endif
 
 static const struct BgTemplate sMatchCallBgTemplates[3] =
 {
@@ -218,6 +309,26 @@ static const struct WindowTemplate sCallMsgBoxWindowTemplate =
     .baseBlock = 10
 };
 
+#ifdef PLATFORM_PC
+static struct SpriteSheet sOptionsCursorSpriteSheets[1];
+static struct SpritePalette sOptionsCursorSpritePalettes[2];
+
+static void LoadOptionsCursorAssets(void)
+{
+    size_t size;
+    if (!sOptionsCursorSpriteSheets[0].data)
+    {
+        sOptionsCursorSpriteSheets[0].data = LoadOptionsCursorGfx(&size);
+        sOptionsCursorSpriteSheets[0].size = size;
+        sOptionsCursorSpriteSheets[0].tag = GFXTAG_CURSOR;
+    }
+    if (!sOptionsCursorSpritePalettes[0].data)
+    {
+        sOptionsCursorSpritePalettes[0].data = LoadOptionsCursorPal();
+        sOptionsCursorSpritePalettes[0].tag = PALTAG_CURSOR;
+    }
+}
+#else
 static const struct CompressedSpriteSheet sOptionsCursorSpriteSheets[1] =
 {
     {sOptionsCursor_Gfx, 0x40, GFXTAG_CURSOR}
@@ -227,6 +338,7 @@ static const struct SpritePalette sOptionsCursorSpritePalettes[2] =
 {
     {sOptionsCursor_Pal, PALTAG_CURSOR}
 };
+#endif
 
 static const struct OamData sOptionsCursorOamData =
 {
@@ -329,12 +441,27 @@ static u32 LoopedTask_OpenMatchCall(s32 state)
         InitBgTemplates(sMatchCallBgTemplates, ARRAY_COUNT(sMatchCallBgTemplates));
         ChangeBgX(2, 0, BG_COORD_SET);
         ChangeBgY(2, 0, BG_COORD_SET);
+#ifdef PLATFORM_PC
+        {
+            size_t size;
+            const u8 *tiles = LoadMatchCallUIGfx(&size);
+            LoadBgTiles(2, tiles, size, 0);
+            SetBgTilemapBuffer(2, gfx->bgTilemapBuffer2);
+            const u16 *map = (const u16 *)LoadMatchCallUITilemap(NULL);
+            CopyToBgTilemapBuffer(2, map, 0, 0);
+            CopyBgTilemapBufferToVram(2);
+            const u16 *pal = LoadMatchCallUIPal(&size);
+            CopyPaletteIntoBufferUnfaded(pal, BG_PLTT_ID(2), size);
+            CopyBgTilemapBufferToVram(2);
+        }
+#else
         DecompressAndCopyTileDataToVram(2, sMatchCallUI_Gfx, 0, 0, 0);
         SetBgTilemapBuffer(2, gfx->bgTilemapBuffer2);
         CopyToBgTilemapBuffer(2, sMatchCallUI_Tilemap, 0, 0);
         CopyBgTilemapBufferToVram(2);
         CopyPaletteIntoBufferUnfaded(sMatchCallUI_Pal, BG_PLTT_ID(2), sizeof(sMatchCallUI_Pal));
         CopyBgTilemapBufferToVram(2);
+#endif
         return LT_INC_AND_PAUSE;
     case 1:
         if (FreeTempTileDataBuffersIfPossible())
@@ -343,7 +470,11 @@ static u32 LoopedTask_OpenMatchCall(s32 state)
         BgDmaFill(1, 0, 0, 1);
         SetBgTilemapBuffer(1, gfx->bgTilemapBuffer1);
         FillBgTilemapBufferRect_Palette0(1, 0x1000, 0, 0, 32, 20);
+#ifdef PLATFORM_PC
+        CopyPaletteIntoBufferUnfaded(LoadCallWindowPal(), BG_PLTT_ID(1), PLTT_SIZE_4BPP);
+#else
         CopyPaletteIntoBufferUnfaded(sCallWindow_Pal, BG_PLTT_ID(1), sizeof(sCallWindow_Pal));
+#endif
         CopyBgTilemapBufferToVram(1);
         return LT_INC_AND_PAUSE;
     case 2:
@@ -351,9 +482,19 @@ static u32 LoopedTask_OpenMatchCall(s32 state)
             return LT_PAUSE;
 
         LoadCallWindowAndFade(gfx);
+#ifdef PLATFORM_PC
+        {
+            size_t size;
+            const u8 *gfxTiles = LoadPokeballGfx(&size);
+            LoadBgTiles(3, gfxTiles, size, 0);
+            CopyPaletteIntoBufferUnfaded(LoadListWindowPal(), BG_PLTT_ID(3), PLTT_SIZE_4BPP);
+            CopyPaletteIntoBufferUnfaded(LoadPokeballPal(), BG_PLTT_ID(5), PLTT_SIZE_4BPP);
+        }
+#else
         DecompressAndCopyTileDataToVram(3, sPokeball_Gfx, 0, 0, 0);
         CopyPaletteIntoBufferUnfaded(sListWindow_Pal, BG_PLTT_ID(3), sizeof(sListWindow_Pal));
         CopyPaletteIntoBufferUnfaded(sPokeball_Pal, BG_PLTT_ID(5), PLTT_SIZE_4BPP);
+#endif
         return LT_INC_AND_PAUSE;
     case 3:
         if (FreeTempTileDataBuffersIfPossible() || !IsMatchCallListInitFinished())
@@ -913,7 +1054,14 @@ static void Task_FlashPokeballIcons(u8 taskId)
         tSinIdx += 4;
         tSinIdx &= 0x7F;
         tSinVal = gSineTable[tSinIdx] >> 4;
+#ifdef PLATFORM_PC
+        {
+            const u16 *pal = LoadPokeballPal();
+            PokenavCopyPalette(pal, &pal[0x10], 0x10, 0x10, tSinVal, &gPlttBufferUnfaded[BG_PLTT_ID(5)]);
+        }
+#else
         PokenavCopyPalette(sPokeball_Pal, &sPokeball_Pal[0x10], 0x10, 0x10, tSinVal, &gPlttBufferUnfaded[BG_PLTT_ID(5)]);
+#endif
         if (!gPaletteFade.active)
             CpuCopy32(&gPlttBufferUnfaded[BG_PLTT_ID(5)], &gPlttBufferFaded[BG_PLTT_ID(5)], PLTT_SIZE_4BPP);
     }
@@ -1175,9 +1323,16 @@ static void AllocMatchCallSprites(void)
     struct Pokenav_MatchCallGfx *gfx = GetSubstructPtr(POKENAV_SUBSTRUCT_MATCH_CALL_OPEN);
 
     // Load options cursor gfx
+#ifdef PLATFORM_PC
+    LoadOptionsCursorAssets();
+    for (i = 0; i < ARRAY_COUNT(sOptionsCursorSpriteSheets); i++)
+        LoadSpriteSheet(&sOptionsCursorSpriteSheets[i]);
+    Pokenav_AllocAndLoadPalettes(sOptionsCursorSpritePalettes);
+#else
     for (i = 0; i < ARRAY_COUNT(sOptionsCursorSpriteSheets); i++)
         LoadCompressedSpriteSheet(&sOptionsCursorSpriteSheets[i]);
     Pokenav_AllocAndLoadPalettes(sOptionsCursorSpritePalettes);
+#endif
     gfx->optionsCursorSprite = NULL;
 
     // Load trainer pic gfx
