@@ -14,6 +14,9 @@
 #include "gba/flash_internal.h"
 #include "text_window.h"
 #include "constants/rgb.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 #define MSG_WIN_TOP 12
 #define CLOCK_WIN_TOP (MSG_WIN_TOP - 4)
@@ -132,9 +135,29 @@ static const u8 sClockFrames[8][3] =
     { 9, 1, 0 },
     { 5, 1, 0 },
 };
+#ifdef PLATFORM_PC
+static const u16 *LoadSaveFailedClockPal(void)
+{
+    static const u16 *sPal;
+    if (!sPal)
+        sPal = AssetsGetPNGPalette("graphics/misc/clock_small.png", NULL);
+    return sPal;
+}
 
+static const u8 *LoadSaveFailedClockGfx(size_t *size)
+{
+    static const u8 *sGfx;
+    static size_t sSize;
+    if (!sGfx)
+        sGfx = AssetsLoad4bpp("graphics/misc/clock_small.png", NULL, &sSize);
+    if (size)
+        *size = sSize;
+    return sGfx;
+}
+#else
 static const u8 sSaveFailedClockPal[] = INCBIN_U8("graphics/misc/clock_small.gbapal");
 static const u32 sSaveFailedClockGfx[] = INCBIN_U32("graphics/misc/clock_small.4bpp.lz");
+#endif
 
 static void CB2_SaveFailedScreen(void);
 static void CB2_WipeSave(void);
@@ -199,7 +222,16 @@ static void CB2_SaveFailedScreen(void)
         LZ77UnCompVram(gBirchBagGrass_Gfx, (void *)VRAM);
         LZ77UnCompVram(gBirchBagTilemap, (void *)(BG_SCREEN_ADDR(14)));
         LZ77UnCompVram(gBirchGrassTilemap, (void *)(BG_SCREEN_ADDR(15)));
+#ifdef PLATFORM_PC
+        {
+            size_t size = 0;
+            const u8 *gfx = LoadSaveFailedClockGfx(&size);
+            if (gfx)
+                CpuFastSet(gfx, (void *)(OBJ_VRAM0 + 0x20), size / 4);
+        }
+#else
         LZ77UnCompVram(sSaveFailedClockGfx, (void *)(OBJ_VRAM0 + 0x20));
+#endif
         ResetBgsAndClearDma3BusyFlags(0);
         InitBgsFromTemplates(0, sBgTemplates, ARRAY_COUNT(sBgTemplates));
         SetBgTilemapBuffer(0, (void *)&gDecompressionBuffer[0x2000]);
@@ -215,7 +247,15 @@ static void CB2_SaveFailedScreen(void)
         ResetTasks();
         ResetPaletteFade();
         LoadPalette(gBirchBagGrass_Pal, BG_PLTT_ID(0), 2 * PLTT_SIZE_4BPP);
+#ifdef PLATFORM_PC
+        {
+            const u16 *pal = LoadSaveFailedClockPal();
+            if (pal)
+                LoadPalette(pal, OBJ_PLTT_ID(0), PLTT_SIZE_4BPP);
+        }
+#else
         LoadPalette(sSaveFailedClockPal, OBJ_PLTT_ID(0), PLTT_SIZE_4BPP);
+#endif
         LoadPalette(gTextWindowFrame1_Pal, BG_PLTT_ID(14), PLTT_SIZE_4BPP);
         LoadPalette(gStandardMenuPalette, BG_PLTT_ID(15), PLTT_SIZE_4BPP);
         DrawStdFrameWithCustomTileAndPalette(sWindowIds[TEXT_WIN_ID], FALSE, 0x214, 0xE);
