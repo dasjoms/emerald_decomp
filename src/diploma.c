@@ -15,6 +15,10 @@
 #include "menu.h"
 #include "pokedex.h"
 #include "constants/rgb.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#include <string.h>
+#endif
 
 extern const u8 gText_DexNational[];
 extern const u8 gText_DexHoenn[];
@@ -38,6 +42,45 @@ static void VBlankCB(void)
     TransferPlttBuffer();
 }
 
+#ifdef PLATFORM_PC
+static const u16 *LoadDiplomaPalettes(void)
+{
+    static u16 sPals[2 * 16];
+    static bool8 sLoaded;
+    if (!sLoaded)
+    {
+        const u16 *pal;
+        pal = AssetsLoadPal("graphics/diploma/national.pal", NULL);
+        memcpy(&sPals[0], pal, PLTT_SIZE_4BPP);
+        pal = AssetsLoadPal("graphics/diploma/hoenn.pal", NULL);
+        memcpy(&sPals[16], pal, PLTT_SIZE_4BPP);
+        sLoaded = TRUE;
+    }
+    return sPals;
+}
+
+static const u32 *LoadDiplomaTilemap(size_t *size)
+{
+    static const u32 *sMap;
+    static size_t sSize;
+    if (!sMap)
+        sMap = AssetsLoadFile("graphics/diploma/tilemap.bin", &sSize);
+    if (size)
+        *size = sSize;
+    return sMap;
+}
+
+static const u8 *LoadDiplomaTiles(size_t *size)
+{
+    static const u8 *sTiles;
+    static size_t sSize;
+    if (!sTiles)
+        sTiles = AssetsLoad4bpp("graphics/diploma/tiles.png", NULL, &sSize);
+    if (size)
+        *size = sSize;
+    return sTiles;
+}
+#else
 static const u16 sDiplomaPalettes[][16] =
 {
     INCBIN_U16("graphics/diploma/national.gbapal"),
@@ -46,6 +89,7 @@ static const u16 sDiplomaPalettes[][16] =
 
 static const u32 sDiplomaTilemap[] = INCBIN_U32("graphics/diploma/tilemap.bin.lz");
 static const u32 sDiplomaTiles[] = INCBIN_U32("graphics/diploma/tiles.4bpp.lz");
+#endif
 
 void CB2_ShowDiploma(void)
 {
@@ -72,6 +116,24 @@ void CB2_ShowDiploma(void)
     ResetSpriteData();
     ResetPaletteFade();
     FreeAllSpritePalettes();
+#ifdef PLATFORM_PC
+    LoadPalette(LoadDiplomaPalettes(), BG_PLTT_ID(0), 2 * PLTT_SIZE_4BPP);
+    sDiplomaTilemapPtr = Alloc(0x1000);
+    InitDiplomaBg();
+    InitDiplomaWindow();
+    ResetTempTileDataBuffers();
+    {
+        size_t size;
+        const u8 *tiles = LoadDiplomaTiles(&size);
+        LoadBgTiles(1, tiles, size, 0);
+    }
+    {
+        size_t size;
+        const u32 *map = LoadDiplomaTilemap(&size);
+        memcpy(sDiplomaTilemapPtr, map, size);
+    }
+    CopyBgTilemapBufferToVram(1);
+#else
     LoadPalette(sDiplomaPalettes, BG_PLTT_ID(0), sizeof(sDiplomaPalettes));
     sDiplomaTilemapPtr = Alloc(0x1000);
     InitDiplomaBg();
@@ -82,6 +144,7 @@ void CB2_ShowDiploma(void)
         ;
     LZDecompressWram(sDiplomaTilemap, sDiplomaTilemapPtr);
     CopyBgTilemapBufferToVram(1);
+#endif
     DisplayDiplomaText();
     BlendPalettes(PALETTES_ALL, 16, RGB_BLACK);
     BeginNormalPaletteFade(PALETTES_ALL, 0, 16, 0, RGB_BLACK);
