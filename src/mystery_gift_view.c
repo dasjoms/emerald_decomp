@@ -16,6 +16,10 @@
 #include "mystery_gift_view.h"
 #include "constants/rgb.h"
 #include "constants/mystery_gift.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#include <string.h>
+#endif
 
 struct WonderGraphics
 {
@@ -26,6 +30,10 @@ struct WonderGraphics
     const u32 *tiles;
     const u32 *map;
     const u16 *pal;
+#ifdef PLATFORM_PC
+    u32 tilesSize;
+    u32 mapSize;
+#endif
 };
 
 //======================
@@ -119,6 +127,15 @@ static const struct WindowTemplate sCard_WindowTemplates[] = {
     }
 };
 
+#ifdef PLATFORM_PC
+static struct WonderGraphics sCardGraphics[NUM_WONDER_BGS];
+static struct WonderGraphics sNewsGraphics[NUM_WONDER_BGS];
+static struct SpriteSheet sSpriteSheet_StampShadow;
+static struct SpritePalette sSpritePalettes_StampShadow[NUM_WONDER_BGS];
+
+static void LoadWonderCardGraphics(void);
+static void LoadWonderNewsGraphics(void);
+#else
 static const u16 sWonderCardBgPal1[]     = INCBIN_U16("graphics/wonder_card/bg1.gbapal");
 static const u16 sWonderCardBgPal2[]     = INCBIN_U16("graphics/wonder_card/bg2.gbapal");
 static const u16 sWonderCardBgPal3[]     = INCBIN_U16("graphics/wonder_card/bg3.gbapal");
@@ -162,17 +179,6 @@ static const struct SpritePalette sSpritePalettes_StampShadow[] = {
     {sStampShadowPal8, TAG_STAMP_SHADOW}
 };
 
-static const struct SpriteTemplate sSpriteTemplate_StampShadow =
-{
-    .tileTag = TAG_STAMP_SHADOW,
-    .paletteTag = TAG_STAMP_SHADOW,
-    .oam = &gOamData_AffineOff_ObjNormal_32x16,
-    .anims = gDummySpriteAnimTable,
-    .images = NULL,
-    .affineAnims = gDummySpriteAffineAnimTable,
-    .callback = SpriteCallbackDummy
-};
-
 static const struct WonderGraphics sCardGraphics[NUM_WONDER_BGS] = {
     {.titleTextPal = 1, .bodyTextPal = 0, .footerTextPal = 0, .stampShadowPal = 0, .tiles = sWonderCardBgGfx1, .map = sWonderCardBgTilemap1, .pal = sWonderCardBgPal1},
     {.titleTextPal = 1, .bodyTextPal = 0, .footerTextPal = 0, .stampShadowPal = 1, .tiles = sWonderCardBgGfx2, .map = sWonderCardBgTilemap2, .pal = sWonderCardBgPal2},
@@ -199,6 +205,9 @@ bool32 WonderCard_Init(struct WonderCard *card, struct WonderCardMetadata *metad
         sWonderCardData->card.type = 0;
     if (sWonderCardData->card.maxStamps > MAX_STAMP_CARD_STAMPS)
         sWonderCardData->card.maxStamps = 0;
+#ifdef PLATFORM_PC
+    LoadWonderCardGraphics();
+#endif
     sWonderCardData->gfx = &sCardGraphics[sWonderCardData->card.bgType];
     return TRUE;
 }
@@ -232,7 +241,11 @@ s32 WonderCard_Enter(void)
         CopyBgTilemapBufferToVram(0);
         CopyBgTilemapBufferToVram(1);
         CopyBgTilemapBufferToVram(2);
+#ifdef PLATFORM_PC
+        LoadBgTiles(2, sWonderCardData->gfx->tiles, sWonderCardData->gfx->tilesSize, 0);
+#else
         DecompressAndCopyTileDataToVram(2, sWonderCardData->gfx->tiles, 0, 0x008, 0);
+#endif
         sWonderCardData->windowIds[CARD_WIN_HEADER] = AddWindow(&sCard_WindowTemplates[CARD_WIN_HEADER]);
         sWonderCardData->windowIds[CARD_WIN_BODY] = AddWindow(&sCard_WindowTemplates[CARD_WIN_BODY]);
         sWonderCardData->windowIds[CARD_WIN_FOOTER] = AddWindow(&sCard_WindowTemplates[CARD_WIN_FOOTER]);
@@ -240,10 +253,17 @@ s32 WonderCard_Enter(void)
     case 3:
         if (FreeTempTileDataBuffersIfPossible())
             return 0;
+#ifdef PLATFORM_PC
+        LoadPalette(GetTextWindowPalette(1), BG_PLTT_ID(2), PLTT_SIZE_4BPP);
+        gPaletteFade.bufferTransferDisabled = TRUE;
+        LoadPalette(sWonderCardData->gfx->pal, BG_PLTT_ID(1), PLTT_SIZE_4BPP);
+        memcpy(sWonderCardData->bgTilemapBuffer, sWonderCardData->gfx->map, sWonderCardData->gfx->mapSize);
+#else
         LoadPalette(GetTextWindowPalette(1), BG_PLTT_ID(2), PLTT_SIZE_4BPP);
         gPaletteFade.bufferTransferDisabled = TRUE;
         LoadPalette(sWonderCardData->gfx->pal, BG_PLTT_ID(1), PLTT_SIZE_4BPP);
         LZ77UnCompWram(sWonderCardData->gfx->map, sWonderCardData->bgTilemapBuffer);
+#endif
         CopyRectToBgTilemapBufferRect(2, sWonderCardData->bgTilemapBuffer, 0, 0, DISPLAY_TILE_WIDTH, DISPLAY_TILE_HEIGHT, 0, 0, DISPLAY_TILE_WIDTH, DISPLAY_TILE_HEIGHT, 1, 0x008, 0);
         CopyBgTilemapBufferToVram(2);
         break;
@@ -497,7 +517,11 @@ static void CreateCardSprites(void)
     // Create stamp sprites
     if (sWonderCardData->card.maxStamps != 0 && sWonderCardData->card.type == CARD_TYPE_STAMP)
     {
+        #ifdef PLATFORM_PC
+        LoadSpriteSheet(&sSpriteSheet_StampShadow);
+        #else
         LoadCompressedSpriteSheetUsingHeap(&sSpriteSheet_StampShadow);
+        #endif
         LoadSpritePalette(&sSpritePalettes_StampShadow[sWonderCardData->gfx->stampShadowPal]);
         for (; i < sWonderCardData->card.maxStamps; i++)
         {
@@ -639,6 +663,145 @@ static const struct WonderGraphics sNewsGraphics[NUM_WONDER_BGS] = {
     {.titleTextPal = 1, .bodyTextPal = 0, .tiles = sWonderNewsGfx7, .map = sWonderNewsTilemap7, .pal = sWonderNewsPal7},
     {.titleTextPal = 1, .bodyTextPal = 0, .tiles = sWonderNewsGfx8, .map = sWonderNewsTilemap8, .pal = sWonderNewsPal8}
 };
+#endif // PLATFORM_PC
+
+static const struct SpriteTemplate sSpriteTemplate_StampShadow =
+{
+    .tileTag = TAG_STAMP_SHADOW,
+    .paletteTag = TAG_STAMP_SHADOW,
+    .oam = &gOamData_AffineOff_ObjNormal_32x16,
+    .anims = gDummySpriteAnimTable,
+    .images = NULL,
+    .affineAnims = gDummySpriteAffineAnimTable,
+    .callback = SpriteCallbackDummy
+};
+
+#ifdef PLATFORM_PC
+static void LoadWonderCardGraphics(void)
+{
+    static bool8 sLoaded;
+    if (sLoaded)
+        return;
+
+    size_t size;
+    sSpriteSheet_StampShadow.data = AssetsLoad4bpp("graphics/wonder_card/stamp_shadow.png", NULL, &size);
+    sSpriteSheet_StampShadow.size = size;
+    sSpriteSheet_StampShadow.tag = TAG_STAMP_SHADOW;
+
+    static const char *const sStampPalPaths[NUM_WONDER_BGS] = {
+        "graphics/wonder_card/stamp_shadow_1.pal",
+        "graphics/wonder_card/stamp_shadow_2.pal",
+        "graphics/wonder_card/stamp_shadow_3.pal",
+        "graphics/wonder_card/stamp_shadow_4.pal",
+        "graphics/wonder_card/stamp_shadow_5.pal",
+        "graphics/wonder_card/stamp_shadow_6.pal",
+        "graphics/wonder_card/stamp_shadow_7.pal",
+        "graphics/wonder_card/stamp_shadow_8.pal",
+    };
+    for (int i = 0; i < NUM_WONDER_BGS; i++)
+    {
+        sSpritePalettes_StampShadow[i].data = AssetsLoadPal(sStampPalPaths[i], NULL);
+        sSpritePalettes_StampShadow[i].tag = TAG_STAMP_SHADOW;
+    }
+
+    static const char *const sBgTilesPng[NUM_WONDER_BGS] = {
+        "graphics/wonder_card/bg1.png",
+        "graphics/wonder_card/bg2.png",
+        "graphics/wonder_card/bg3.png",
+        "graphics/wonder_card/bg3.png",
+        "graphics/wonder_card/bg3.png",
+        "graphics/wonder_card/bg3.png",
+        "graphics/wonder_card/bg7.png",
+        "graphics/wonder_card/bg8.png",
+    };
+    static const char *const sBgPalPng[NUM_WONDER_BGS] = {
+        "graphics/wonder_card/bg1.png",
+        "graphics/wonder_card/bg2.png",
+        "graphics/wonder_card/bg3.png",
+        "graphics/wonder_card/bg4.png",
+        "graphics/wonder_card/bg5.png",
+        "graphics/wonder_card/bg6.png",
+        "graphics/wonder_card/bg7.png",
+        "graphics/wonder_card/bg8.png",
+    };
+    static const char *const sBgMapPaths[NUM_WONDER_BGS] = {
+        "graphics/wonder_card/bg1.bin",
+        "graphics/wonder_card/bg2.bin",
+        "graphics/wonder_card/bg3.bin",
+        "graphics/wonder_card/bg3.bin",
+        "graphics/wonder_card/bg3.bin",
+        "graphics/wonder_card/bg3.bin",
+        "graphics/wonder_card/bg7.bin",
+        "graphics/wonder_card/bg8.bin",
+    };
+
+    for (int i = 0; i < NUM_WONDER_BGS; i++)
+    {
+        sCardGraphics[i].titleTextPal = 1;
+        sCardGraphics[i].bodyTextPal = 0;
+        sCardGraphics[i].footerTextPal = 0;
+        sCardGraphics[i].stampShadowPal = i;
+        sCardGraphics[i].tiles = (const u32 *)AssetsLoad4bpp(sBgTilesPng[i], NULL, &size);
+        sCardGraphics[i].tilesSize = size;
+        sCardGraphics[i].map = AssetsLoadFile(sBgMapPaths[i], &size);
+        sCardGraphics[i].mapSize = size;
+        sCardGraphics[i].pal = AssetsGetPNGPalette(sBgPalPng[i], NULL);
+    }
+
+    sLoaded = TRUE;
+}
+
+static void LoadWonderNewsGraphics(void)
+{
+    static bool8 sLoaded;
+    if (sLoaded)
+        return;
+
+    LoadWonderCardGraphics();
+    size_t size;
+
+    static const char *const sNewsTilesPng[NUM_WONDER_BGS] = {
+        "graphics/wonder_news/bg1.png",
+        "graphics/wonder_news/bg2.png",
+        "graphics/wonder_news/bg3.png",
+        "graphics/wonder_news/bg3.png",
+        "graphics/wonder_news/bg3.png",
+        "graphics/wonder_news/bg3.png",
+        "graphics/wonder_news/bg7.png",
+        "graphics/wonder_news/bg8.png",
+    };
+    static const char *const sNewsMapPaths[NUM_WONDER_BGS] = {
+        "graphics/wonder_news/bg1.bin",
+        "graphics/wonder_news/bg2.bin",
+        "graphics/wonder_news/bg3.bin",
+        "graphics/wonder_news/bg3.bin",
+        "graphics/wonder_news/bg3.bin",
+        "graphics/wonder_news/bg3.bin",
+        "graphics/wonder_news/bg7.bin",
+        "graphics/wonder_news/bg8.bin",
+    };
+
+    for (int i = 0; i < NUM_WONDER_BGS; i++)
+    {
+        sNewsGraphics[i].titleTextPal = 1;
+        sNewsGraphics[i].bodyTextPal = 0;
+        sNewsGraphics[i].tiles = (const u32 *)AssetsLoad4bpp(sNewsTilesPng[i], NULL, &size);
+        sNewsGraphics[i].tilesSize = size;
+        sNewsGraphics[i].map = AssetsLoadFile(sNewsMapPaths[i], &size);
+        sNewsGraphics[i].mapSize = size;
+        if (i == 0)
+            sNewsGraphics[i].pal = AssetsGetPNGPalette("graphics/wonder_news/bg1.png", NULL);
+        else if (i >= 1 && i <= 5)
+            sNewsGraphics[i].pal = sCardGraphics[i].pal;
+        else if (i == 6)
+            sNewsGraphics[i].pal = AssetsGetPNGPalette("graphics/wonder_news/bg7.png", NULL);
+        else
+            sNewsGraphics[i].pal = AssetsGetPNGPalette("graphics/wonder_news/bg8.png", NULL);
+    }
+
+    sLoaded = TRUE;
+}
+#endif // PLATFORM_PC
 
 bool32 WonderNews_Init(const struct WonderNews *news)
 {
@@ -650,6 +813,9 @@ bool32 WonderNews_Init(const struct WonderNews *news)
     sWonderNewsData->news = *news;
     if (sWonderNewsData->news.bgType >= NUM_WONDER_BGS)
         sWonderNewsData->news.bgType = 0;
+#ifdef PLATFORM_PC
+    LoadWonderNewsGraphics();
+#endif
     sWonderNewsData->gfx = &sNewsGraphics[sWonderNewsData->news.bgType];
     sWonderNewsData->arrowTaskId = TASK_NONE;
     return TRUE;
@@ -696,17 +862,28 @@ s32 WonderNews_Enter(void)
         CopyBgTilemapBufferToVram(1);
         CopyBgTilemapBufferToVram(2);
         CopyBgTilemapBufferToVram(3);
+#ifdef PLATFORM_PC
+        LoadBgTiles(3, sWonderNewsData->gfx->tiles, sWonderNewsData->gfx->tilesSize, 0);
+#else
         DecompressAndCopyTileDataToVram(3, sWonderNewsData->gfx->tiles, 0, 8, 0);
+#endif
         sWonderNewsData->windowIds[NEWS_WIN_TITLE] = AddWindow(&sNews_WindowTemplates[NEWS_WIN_TITLE]);
         sWonderNewsData->windowIds[NEWS_WIN_BODY] = AddWindow(&sNews_WindowTemplates[NEWS_WIN_BODY]);
         break;
     case 3:
         if (FreeTempTileDataBuffersIfPossible())
             return 0;
+#ifdef PLATFORM_PC
+        LoadPalette(GetTextWindowPalette(1), BG_PLTT_ID(2), PLTT_SIZE_4BPP);
+        gPaletteFade.bufferTransferDisabled = TRUE;
+        LoadPalette(sWonderNewsData->gfx->pal, BG_PLTT_ID(1), PLTT_SIZE_4BPP);
+        memcpy(sWonderNewsData->bgTilemapBuffer, sWonderNewsData->gfx->map, sWonderNewsData->gfx->mapSize);
+#else
         LoadPalette(GetTextWindowPalette(1), BG_PLTT_ID(2), PLTT_SIZE_4BPP);
         gPaletteFade.bufferTransferDisabled = TRUE;
         LoadPalette(sWonderNewsData->gfx->pal, BG_PLTT_ID(1), PLTT_SIZE_4BPP);
         LZ77UnCompWram(sWonderNewsData->gfx->map, sWonderNewsData->bgTilemapBuffer);
+#endif
         CopyRectToBgTilemapBufferRect(1, sWonderNewsData->bgTilemapBuffer, 0, 0, DISPLAY_TILE_WIDTH, 3, 0, 0, DISPLAY_TILE_WIDTH, 3, 1, 8, 0);
         CopyRectToBgTilemapBufferRect(3, sWonderNewsData->bgTilemapBuffer, 0, 3, DISPLAY_TILE_WIDTH, 3 + DISPLAY_TILE_HEIGHT, 0, 3, DISPLAY_TILE_WIDTH, 3 + DISPLAY_TILE_HEIGHT, 1, 8, 0);
         CopyBgTilemapBufferToVram(1);
