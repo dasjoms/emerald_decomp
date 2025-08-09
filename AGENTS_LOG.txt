@@ -62,3 +62,4 @@
 - Converted PokéNav main menu backgrounds and blue light to load tiles, tilemaps, and palettes from external files at runtime on PC builds, removing INCBIN assets in pokenav_menu_handler_gfx.c and loading option palettes dynamically.
 - Removed duplicate sprite sheet and palette definitions in pokenav_menu_handler_gfx.c to finalize PokéNav main menu runtime loading.
 - Converted PokéNav ribbon list and ribbon summary assets to load graphics, tilemaps, and palettes from external files at runtime on PC builds, eliminating INCBIN data and enabling dynamic ribbon icons.
+- Converted Contest text palette and Berry Tag screen font palette to load from external .pal files at runtime on PC builds, removing corresponding INCBIN data.
