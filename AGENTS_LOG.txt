@@ -59,3 +59,4 @@
 - Converted diploma screen assets to load tiles, tilemap, and palettes from external files at runtime on PC builds, removing INCBIN usage in diploma.c.
 - Migrated Wonder Card and Wonder News interfaces to load backgrounds, tilemaps, palettes, and stamp graphics from external files at runtime on PC builds, eliminating INCBIN data in mystery_gift_view.c.
 - Converted PokéNav condition selection icons and sparkle effects to load graphics and palettes from PNG files at runtime on PC builds, eliminating remaining INCBIN data and restricting cancel assets to GBA builds.
+- Converted PokéNav main menu backgrounds and blue light to load tiles, tilemaps, and palettes from external files at runtime on PC builds, removing INCBIN assets in pokenav_menu_handler_gfx.c and loading option palettes dynamically.
