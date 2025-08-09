@@ -54,3 +54,4 @@
 - Converted standard menu and Hall of Fame PC top bar palettes to load from external .pal files on PC builds, removing INCBIN data from menu.c and enabling runtime palette loading.
 - Converted main menu background and text palettes to load from external .pal files at runtime on PC builds, removing INCBIN data from main_menu.c.
 - Converted trainer emotion icons to load PNG graphics at runtime on PC builds, replacing embedded INCBIN data in trainer_see.c.
+- Converted map name popup themes to load tiles, outlines, and palettes from external PNG and PAL files at runtime on PC builds, removing INCBIN dependencies in map_name_popup.c.
