@@ -32,3 +32,4 @@
 - Converted Pokémon summary screen assets to runtime loading for PC builds, loading the status tilemap, A/B button graphics, and markings palette from external files to eliminate remaining INCBIN data.
 - Migrated wireless minigame countdown graphics to load PNG sprites and palettes at runtime for PC builds, removing INCBIN dependencies.
 - Loaded drought weather color lookup tables from external binaries for PC builds, eliminating remaining INCBIN data for the drought effect.
+- Replaced Mystery Gift menu textbox border INCBIN data with runtime PNG loading for graphics and palette to advance PC asset migration.
