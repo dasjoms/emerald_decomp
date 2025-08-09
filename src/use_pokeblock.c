@@ -24,6 +24,10 @@
 #include "graphics.h"
 #include "pokemon_summary_screen.h"
 #include "item_menu.h"
+#include <string.h>
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 /*
     This file handles the screen where the player chooses
@@ -170,11 +174,100 @@ static EWRAM_DATA u8 *sGraph_Tilemap = NULL;
 static EWRAM_DATA u8 *sGraph_Gfx = NULL;
 static EWRAM_DATA u8 *sMonFrame_TilemapPtr = NULL;
 static EWRAM_DATA struct UsePokeblockMenu *sMenu = NULL;
+#ifdef PLATFORM_PC
+static const u16 *LoadMonFramePal(void)
+{
+    static const u16 *pal;
+    if (!pal)
+        pal = AssetsGetPNGPalette("graphics/pokeblock/use_screen/mon_frame.png", NULL);
+    return pal;
+}
 
+static const u8 *LoadMonFrameGfx(size_t *sizeOut)
+{
+    static const u8 *gfx;
+    static size_t size;
+    if (!gfx)
+        gfx = AssetsLoad4bpp("graphics/pokeblock/use_screen/mon_frame.png", NULL, &size);
+    if (sizeOut)
+        *sizeOut = size;
+    return gfx;
+}
+
+static const u16 *LoadMonFrameTilemap(size_t *sizeOut)
+{
+    static const u16 *map;
+    static size_t size;
+    if (!map)
+        map = AssetsLoadFile("graphics/pokeblock/use_screen/mon_frame.bin", &size);
+    if (sizeOut)
+        *sizeOut = size;
+    return map;
+}
+
+static const u16 *LoadGraphTilemap(size_t *sizeOut)
+{
+    static const u16 *map;
+    static size_t size;
+    if (!map)
+        map = AssetsLoadFile("graphics/pokeblock/use_screen/graph.bin", &size);
+    if (sizeOut)
+        *sizeOut = size;
+    return map;
+}
+
+static const u8 *LoadGraphGfx(size_t *sizeOut)
+{
+    static const u8 *gfx;
+    static size_t size;
+    if (!gfx)
+        gfx = AssetsLoad4bpp("graphics/pokeblock/use_screen/graph.png", NULL, &size);
+    if (sizeOut)
+        *sizeOut = size;
+    return gfx;
+}
+
+static const u16 *LoadGraphPal(void)
+{
+    static const u16 *pal;
+    if (!pal)
+        pal = AssetsGetPNGPalette("graphics/pokeblock/use_screen/graph.png", NULL);
+    return pal;
+}
+
+static const u16 *LoadGraphDataTilemap(size_t *sizeOut)
+{
+    static const u16 *map;
+    static size_t size;
+    if (!map)
+        map = AssetsLoadFile("graphics/pokeblock/use_screen/graph_data.bin", &size);
+    if (sizeOut)
+        *sizeOut = size;
+    return map;
+}
+
+static const u16 *LoadNatureWinTilemap(void)
+{
+    static const u16 *map;
+    if (!map)
+        map = AssetsLoadPal("graphics/pokeblock/use_screen/nature.pal", NULL);
+    return map;
+}
+
+static struct SpriteSheet sSpriteSheet_UpDown = { NULL, 0x200, TAG_UP_DOWN };
+static struct SpritePalette sSpritePalette_UpDown = { NULL, TAG_UP_DOWN };
+static struct SpritePalette sSpritePalette_Condition = { NULL, TAG_CONDITION };
+static const u8 *sConditionGfx;
+static size_t sConditionGfxSize;
+#else
 static const u32 sMonFrame_Pal[] = INCBIN_U32("graphics/pokeblock/use_screen/mon_frame_pal.bin");
 static const u32 sMonFrame_Gfx[] = INCBIN_U32("graphics/pokeblock/use_screen/mon_frame.4bpp");
 static const u32 sMonFrame_Tilemap[] = INCBIN_U32("graphics/pokeblock/use_screen/mon_frame.bin.lz");
 static const u32 sGraphData_Tilemap[] = INCBIN_U32("graphics/pokeblock/use_screen/graph_data.bin.lz");
+static const struct SpriteSheet sSpriteSheet_UpDown = { gUsePokeblockUpDown_Gfx, 0x200, TAG_UP_DOWN };
+static const struct SpritePalette sSpritePalette_UpDown = { gUsePokeblockUpDown_Pal, TAG_UP_DOWN };
+static const struct SpritePalette sSpritePalette_Condition = { gUsePokeblockCondition_Pal, TAG_CONDITION };
+#endif
 
 // The condition/flavors aren't listed in their normal order in this file, they're listed as shown on the graph going counter-clockwise
 // Normally they would go Cool/Spicy, Beauty/Dry, Cute/Sweet, Smart/Bitter, Tough/Sour (also graph order, but clockwise)
@@ -1116,7 +1209,16 @@ static u8 UNUSED GetPartyIdFromSelectionId_(u8 selectionId)
 static void LoadAndCreateUpDownSprites(void)
 {
     u16 i;
-
+#ifdef PLATFORM_PC
+    if (!sSpriteSheet_UpDown.data)
+    {
+        size_t size = 0;
+        sSpriteSheet_UpDown.data = AssetsLoad4bpp("graphics/pokeblock/use_screen/updown.png", NULL, &size);
+        sSpriteSheet_UpDown.size = (u16)size;
+    }
+    if (!sSpritePalette_UpDown.data)
+        sSpritePalette_UpDown.data = AssetsGetPNGPalette("graphics/pokeblock/use_screen/updown.png", NULL);
+#endif
     LoadSpriteSheet(&sSpriteSheet_UpDown);
     LoadSpritePalette(&sSpritePalette_UpDown);
     sInfo->numEnhancements = 0;
@@ -1334,35 +1436,64 @@ static bool8 LoadUsePokeblockMenuGfx(void)
         sMonFrame_TilemapPtr = Alloc(1280);
         break;
     case 2:
+#ifdef PLATFORM_PC
+        memcpy(sMonFrame_TilemapPtr, LoadMonFrameTilemap(NULL), 1280);
+#else
         LZ77UnCompVram(sMonFrame_Tilemap, sMonFrame_TilemapPtr);
+#endif
         break;
     case 3:
+#ifdef PLATFORM_PC
+        LoadBgTiles(3, LoadMonFrameGfx(NULL), 224, 0);
+#else
         LoadBgTiles(3, sMonFrame_Gfx, 224, 0);
+#endif
         break;
     case 4:
          LoadBgTilemap(3, sMonFrame_TilemapPtr, 1280, 0);
         break;
     case 5:
+#ifdef PLATFORM_PC
+        LoadPalette(LoadMonFramePal(), BG_PLTT_ID(13), PLTT_SIZE_4BPP);
+#else
         LoadPalette(sMonFrame_Pal, BG_PLTT_ID(13), PLTT_SIZE_4BPP);
+#endif
         sMenu->curMonXOffset = -80;
         break;
     case 6:
+#ifdef PLATFORM_PC
+        memcpy(sGraph_Gfx, LoadGraphGfx(NULL), 6656);
+#else
         LZ77UnCompVram(gUsePokeblockGraph_Gfx, sGraph_Gfx);
+#endif
         break;
     case 7:
+#ifdef PLATFORM_PC
+        memcpy(sGraph_Tilemap, LoadGraphTilemap(NULL), 1280);
+        LoadPalette(LoadGraphPal(), BG_PLTT_ID(2), PLTT_SIZE_4BPP);
+#else
         LZ77UnCompVram(gUsePokeblockGraph_Tilemap, sGraph_Tilemap);
         LoadPalette(gUsePokeblockGraph_Pal, BG_PLTT_ID(2), PLTT_SIZE_4BPP);
+#endif
         break;
     case 8:
         LoadBgTiles(1, sGraph_Gfx, 6656, 160 << 2);
         break;
     case 9:
         SetBgTilemapBuffer(1, sGraph_Tilemap);
+#ifdef PLATFORM_PC
+        CopyToBgTilemapBufferRect(1, LoadNatureWinTilemap(), 0, 13, 12, 4);
+#else
         CopyToBgTilemapBufferRect(1, gUsePokeblockNatureWin_Pal, 0, 13, 12, 4);
+#endif
         CopyBgTilemapBufferToVram(1);
         break;
     case 10:
+#ifdef PLATFORM_PC
+        memcpy(sMenu->tilemapBuffer, LoadGraphDataTilemap(NULL), 1280);
+#else
         LZ77UnCompVram(sGraphData_Tilemap, sMenu->tilemapBuffer);
+#endif
         break;
     case 11:
         LoadBgTilemap(2, sMenu->tilemapBuffer, 1280, 0);
@@ -1607,12 +1738,25 @@ static void LoadConditionGfx(void)
     struct CompressedSpriteSheet spriteSheet;
     struct SpritePalette spritePalette;
 
+#ifdef PLATFORM_PC
+    if (!sConditionGfx)
+        sConditionGfx = AssetsLoad4bpp("graphics/pokeblock/use_screen/condition.png", NULL, &sConditionGfxSize);
+    if (!sSpritePalette_Condition.data)
+        sSpritePalette_Condition.data = AssetsGetPNGPalette("graphics/pokeblock/use_screen/condition.png", NULL);
+    spritePalette = sSpritePalette_Condition;
+    spriteSheet.data = sConditionGfx;
+    spriteSheet.size = (u16)sConditionGfxSize;
+    spriteSheet.tag = TAG_CONDITION;
+    LoadSpriteSheet((struct SpriteSheet *)&spriteSheet);
+    LoadSpritePalette(&spritePalette);
+#else
     spritePalette = sSpritePalette_Condition;
     spriteSheet.data = gUsePokeblockCondition_Gfx;
     spriteSheet.size = 0x800;
     spriteSheet.tag = TAG_CONDITION;
     LoadCompressedSpriteSheet(&spriteSheet);
     LoadSpritePalette(&spritePalette);
+#endif
 }
 
 #define sSpeed   data[0]
