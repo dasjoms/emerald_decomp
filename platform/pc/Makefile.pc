@@ -17,6 +17,7 @@ PC_SRCS := platform/pc/platform.c \
            platform/pc/timer.c \
            platform/pc/fs.c \
            platform/pc/assets.c \
+           platform/pc/flash.c \
            platform/pc/syscalls.c \
            platform/pc/game_loop_stub.c \
            platform/pc/m4a_stub.c \
