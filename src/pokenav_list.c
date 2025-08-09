@@ -7,6 +7,9 @@
 #include "menu.h"
 #include "decompress.h"
 #include "international_string_util.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 #define GFXTAG_ARROW 10
 #define PALTAG_ARROW 20
@@ -93,8 +96,52 @@ static u32 LoopedTask_EraseListForCheckPage(s32);
 static u32 LoopedTask_ReshowListFromCheckPage(s32);
 static u32 LoopedTask_PrintCheckPageInfo(s32);
 
+#ifdef PLATFORM_PC
+static struct SpriteSheet sListArrowSpriteSheets[] =
+{
+    { NULL, 0, GFXTAG_ARROW },
+    {},
+};
+
+static struct SpritePalette sListArrowPalettes[] =
+{
+    { NULL, PALTAG_ARROW },
+    {},
+};
+
+static void LoadListArrowAssets(void)
+{
+    if (!sListArrowSpriteSheets[0].data)
+    {
+        size_t size = 0;
+        sListArrowSpriteSheets[0].data = AssetsLoad4bpp("graphics/pokenav/list_arrows.png", NULL, &size);
+        sListArrowSpriteSheets[0].size = (u16)size;
+    }
+    if (!sListArrowPalettes[0].data)
+        sListArrowPalettes[0].data = AssetsGetPNGPalette("graphics/pokenav/list_arrows.png", NULL);
+}
+#else
 static const u16 sListArrow_Pal[] = INCBIN_U16("graphics/pokenav/list_arrows.gbapal");
 static const u32 sListArrow_Gfx[] = INCBIN_U32("graphics/pokenav/list_arrows.4bpp.lz");
+
+static const struct CompressedSpriteSheet sListArrowSpriteSheets[] =
+{
+    {
+        .data = sListArrow_Gfx,
+        .size = 0xC0,
+        .tag = GFXTAG_ARROW
+    }
+};
+
+static const struct SpritePalette sListArrowPalettes[] =
+{
+    {
+        .data = sListArrow_Pal,
+        .tag = PALTAG_ARROW
+    },
+    {}
+};
+#endif
 
 static EWRAM_DATA u32 sMoveWindowDownIndex = 0; // Read, but pointlessly
 
@@ -836,11 +883,15 @@ static const struct SpriteTemplate sSpriteTemplate_UpDownArrow =
 static void LoadListArrowGfx(void)
 {
     u32 i;
+#ifdef PLATFORM_PC
+    LoadListArrowAssets();
+    for (i = 0; sListArrowSpriteSheets[i].data != NULL; i++)
+        LoadSpriteSheet(&sListArrowSpriteSheets[i]);
+#else
     const struct CompressedSpriteSheet *ptr;
-
     for (i = 0, ptr = sListArrowSpriteSheets; i < ARRAY_COUNT(sListArrowSpriteSheets); ptr++, i++)
         LoadCompressedSpriteSheet(ptr);
-
+#endif
     Pokenav_AllocAndLoadPalettes(sListArrowPalettes);
 }
 
