@@ -43,3 +43,4 @@
 - Migrated cave transition graphics in `fldeff_flash.c` to runtime PNG and palette loading for PC builds, eliminating INCBIN usage for tiles, tilemap, and palettes.
 - Converted secret base field effects and record mixing lights to runtime PNG and palette loading on PC, replacing INCBIN assets for secret power entrances, sand pillars, and cable-club lights.
 - Converted Battle Frontier circle transition assets to runtime PNG loading on PC, replacing INCBIN graphics, tilemap, and palette for the logo animation.
+- Converted Reset RTC screen cursor arrows to load PNG graphics and palette at runtime on PC builds, removing INCBIN data for the arrow sprites.

@@ -18,6 +18,9 @@
 #include "window.h"
 #include "gpu_regs.h"
 #include "constants/rgb.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 #define PALTAG_ARROW 0x1000
 
@@ -176,6 +179,27 @@ static const struct OamData sOamData_Arrow =
     .affineParam = 0,
 };
 
+#ifdef PLATFORM_PC
+static struct SpriteFrameImage sPicTable_Arrow[2];
+static struct SpritePalette sSpritePalette_Arrow = { NULL, PALTAG_ARROW };
+
+static void LoadResetRtcArrowAssets(void)
+{
+    size_t size = 0;
+    if (!sPicTable_Arrow[0].data)
+    {
+        sPicTable_Arrow[0].data = AssetsLoad4bpp("graphics/reset_rtc_screen/arrow_down.png", NULL, &size);
+        sPicTable_Arrow[0].size = (u16)size;
+    }
+    if (!sPicTable_Arrow[1].data)
+    {
+        sPicTable_Arrow[1].data = AssetsLoad4bpp("graphics/reset_rtc_screen/arrow_right.png", NULL, &size);
+        sPicTable_Arrow[1].size = (u16)size;
+    }
+    if (!sSpritePalette_Arrow.data)
+        sSpritePalette_Arrow.data = AssetsLoadPal("graphics/reset_rtc_screen/arrow.pal", NULL);
+}
+#else
 static const u8 sArrowDown_Gfx[] = INCBIN_U8("graphics/reset_rtc_screen/arrow_down.4bpp");
 static const u8 sArrowRight_Gfx[] = INCBIN_U8("graphics/reset_rtc_screen/arrow_right.4bpp");
 static const u16 sArrow_Pal[] = INCBIN_U16("graphics/reset_rtc_screen/arrow.gbapal");
@@ -190,6 +214,7 @@ static const struct SpritePalette sSpritePalette_Arrow =
 {
     sArrow_Pal, PALTAG_ARROW
 };
+#endif
 
 static const union AnimCmd sAnim_Arrow_Down[] =
 {
@@ -338,6 +363,9 @@ static void CreateCursor(u8 taskId)
 {
     u32 spriteId;
 
+#ifdef PLATFORM_PC
+    LoadResetRtcArrowAssets();
+#endif
     LoadSpritePalette(&sSpritePalette_Arrow);
 
     spriteId = CreateSpriteAtEnd(&sSpriteTemplate_Arrow, 53, 68, 0);
