@@ -40,3 +40,4 @@
 - Migrated Pokénav main menu spinning icon graphics and palette to load from PNG at runtime for PC builds, eliminating INCBIN data and preparing dynamic sprite sheet usage.
 - Converted Pokéball battle transition assets to runtime loading for PC builds, decoding big Pokéball and trail graphics and palette from external files to replace remaining INCBIN data.
 - Converted Trainer Card interfaces to runtime asset loading on PC, pulling tilemaps, tiles, and palettes from external files and removing related INCBIN data.
+- Migrated cave transition graphics in `fldeff_flash.c` to runtime PNG and palette loading for PC builds, eliminating INCBIN usage for tiles, tilemap, and palettes.

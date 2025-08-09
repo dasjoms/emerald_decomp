@@ -15,6 +15,9 @@
 #include "task.h"
 #include "constants/songs.h"
 #include "constants/map_types.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 struct FlashStruct
 {
@@ -61,6 +64,57 @@ static const struct FlashStruct sTransitionTypes[] =
     {},
 };
 
+#ifdef PLATFORM_PC
+static const u16 *LoadCaveTransitionPaletteWhite(void)
+{
+    static const u16 *pal;
+    if (!pal)
+        pal = AssetsLoadPal("graphics/cave_transition/white.pal", NULL);
+    return pal;
+}
+
+static const u16 *LoadCaveTransitionPaletteBlack(void)
+{
+    static const u16 *pal;
+    if (!pal)
+        pal = AssetsLoadPal("graphics/cave_transition/black.pal", NULL);
+    return pal;
+}
+
+static const u16 *LoadCaveTransitionPaletteEnter(void)
+{
+    static const u16 *pal;
+    if (!pal)
+        pal = AssetsLoadPal("graphics/cave_transition/enter.pal", NULL);
+    return pal;
+}
+
+static const u16 *LoadCaveTransitionTilemap(size_t *sizeOut)
+{
+    static const u16 *map;
+    static size_t size;
+    if (!map)
+        map = AssetsLoadFile("graphics/cave_transition/tilemap.bin", &size);
+    if (sizeOut)
+        *sizeOut = size;
+    return map;
+}
+
+static const u8 *LoadCaveTransitionTiles(size_t *sizeOut)
+{
+    static const u8 *tiles;
+    static size_t size;
+    if (!tiles)
+        tiles = AssetsLoad4bpp("graphics/cave_transition/tiles.png", NULL, &size);
+    if (sizeOut)
+        *sizeOut = size;
+    return tiles;
+}
+
+#define sCaveTransitionPalette_White LoadCaveTransitionPaletteWhite()
+#define sCaveTransitionPalette_Black LoadCaveTransitionPaletteBlack()
+#define sCaveTransitionPalette_Enter LoadCaveTransitionPaletteEnter()
+#else
 static const u16 sCaveTransitionPalette_White[] = INCBIN_U16("graphics/cave_transition/white.gbapal");
 static const u16 sCaveTransitionPalette_Black[] = INCBIN_U16("graphics/cave_transition/black.gbapal");
 
@@ -68,6 +122,7 @@ static const u16 sCaveTransitionPalette_Enter[] = INCBIN_U16("graphics/cave_tran
 
 static const u32 sCaveTransitionTilemap[] = INCBIN_U32("graphics/cave_transition/tilemap.bin.lz");
 static const u32 sCaveTransitionTiles[] = INCBIN_U32("graphics/cave_transition/tiles.4bpp.lz");
+#endif
 
 bool8 SetUpFieldMove_Flash(void)
 {
@@ -216,8 +271,20 @@ static void Task_ExitCaveTransition1(u8 taskId)
 static void Task_ExitCaveTransition2(u8 taskId)
 {
     SetGpuReg(REG_OFFSET_DISPCNT, 0);
+#ifdef PLATFORM_PC
+    {
+        size_t size;
+        const u8 *tiles = LoadCaveTransitionTiles(&size);
+        if (tiles)
+            CpuFastSet(tiles, (void *)(VRAM + 0xC000), size / 4);
+        const u16 *tilemap = LoadCaveTransitionTilemap(&size);
+        if (tilemap)
+            CpuFastSet(tilemap, (void *)(VRAM + 0xF800), size / 4);
+    }
+#else
     LZ77UnCompVram(sCaveTransitionTiles, (void *)(VRAM + 0xC000));
     LZ77UnCompVram(sCaveTransitionTilemap, (void *)(VRAM + 0xF800));
+#endif
     LoadPalette(sCaveTransitionPalette_White, BG_PLTT_ID(14), PLTT_SIZE_4BPP);
     LoadPalette(&sCaveTransitionPalette_Enter[8], BG_PLTT_ID(14), PLTT_SIZEOF(8));
     SetGpuReg(REG_OFFSET_BLDCNT, BLDCNT_TGT1_BG0
@@ -301,8 +368,20 @@ static void Task_EnterCaveTransition1(u8 taskId)
 static void Task_EnterCaveTransition2(u8 taskId)
 {
     SetGpuReg(REG_OFFSET_DISPCNT, 0);
+#ifdef PLATFORM_PC
+    {
+        size_t size;
+        const u8 *tiles = LoadCaveTransitionTiles(&size);
+        if (tiles)
+            CpuFastSet(tiles, (void *)(VRAM + 0xC000), size / 4);
+        const u16 *tilemap = LoadCaveTransitionTilemap(&size);
+        if (tilemap)
+            CpuFastSet(tilemap, (void *)(VRAM + 0xF800), size / 4);
+    }
+#else
     LZ77UnCompVram(sCaveTransitionTiles, (void *)(VRAM + 0xC000));
     LZ77UnCompVram(sCaveTransitionTilemap, (void *)(VRAM + 0xF800));
+#endif
     SetGpuReg(REG_OFFSET_BLDCNT, 0);
     SetGpuReg(REG_OFFSET_BLDALPHA, 0);
     SetGpuReg(REG_OFFSET_BLDY, 0);
