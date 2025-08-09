@@ -61,17 +61,108 @@ static void SpriteCB_SandPillar_BreakTop(struct Sprite *);
 static void SpriteCB_SandPillar_BreakBase(struct Sprite *);
 static void SpriteCB_SandPillar_End(struct Sprite *);
 
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+static struct SpriteFrameImage sPicTable_SecretPowerCave[5];
+static struct SpriteFrameImage sPicTable_SecretPowerTree[5];
+static struct SpriteFrameImage sPicTable_SecretPowerShrub[5];
+static struct SpriteFrameImage sPicTable_SandPillar[3];
+static struct SpriteFrameImage sPicTable_RecordMixLights[3];
+struct SpritePalette gSpritePalette_SecretPower_Cave = { NULL, FLDEFF_PAL_TAG_SECRET_POWER_TREE };
+struct SpritePalette gSpritePalette_SecretPower_Plant = { NULL, FLDEFF_PAL_TAG_SECRET_POWER_PLANT };
+static struct SpritePalette sSpritePalette_RecordMixLights = { NULL, 0x1000 };
+static void LoadSecretPowerAssets(void)
+{
+    if (!sPicTable_SecretPowerCave[0].data)
+    {
+        size_t size;
+        const u8 *gfx = AssetsLoad4bpp("graphics/field_effects/pics/secret_power_cave.png",
+                                       "graphics/field_effects/palettes/secret_power_cave.pal", &size);
+        if (gfx)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                sPicTable_SecretPowerCave[i].data = gfx + i * 128;
+                sPicTable_SecretPowerCave[i].size = 128;
+            }
+        }
+    }
+    if (!sPicTable_SecretPowerTree[0].data)
+    {
+        size_t size;
+        const u8 *gfx = AssetsLoad4bpp("graphics/field_effects/pics/secret_power_tree.png", NULL, &size);
+        if (gfx)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                sPicTable_SecretPowerTree[i].data = gfx + i * 128;
+                sPicTable_SecretPowerTree[i].size = 128;
+            }
+        }
+    }
+    if (!sPicTable_SecretPowerShrub[0].data)
+    {
+        size_t size;
+        const u8 *gfx = AssetsLoad4bpp("graphics/field_effects/pics/secret_power_shrub.png", NULL, &size);
+        if (gfx)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                sPicTable_SecretPowerShrub[i].data = gfx + i * 128;
+                sPicTable_SecretPowerShrub[i].size = 128;
+            }
+        }
+    }
+    if (!gSpritePalette_SecretPower_Cave.data)
+        gSpritePalette_SecretPower_Cave.data = AssetsLoadPal("graphics/field_effects/palettes/secret_power_cave.pal", NULL);
+    if (!gSpritePalette_SecretPower_Plant.data)
+        gSpritePalette_SecretPower_Plant.data = AssetsLoadPal("graphics/field_effects/palettes/secret_power_plant.pal", NULL);
+}
+static void LoadSandPillarAssets(void)
+{
+    static const char *paths[3] = {
+        "graphics/field_effects/pics/sand_pillar/0.png",
+        "graphics/field_effects/pics/sand_pillar/1.png",
+        "graphics/field_effects/pics/sand_pillar/2.png"
+    };
+    for (int i = 0; i < 3; i++)
+    {
+        if (!sPicTable_SandPillar[i].data)
+            sPicTable_SandPillar[i].data = AssetsLoad4bpp(paths[i], NULL, (size_t *)&sPicTable_SandPillar[i].size);
+    }
+}
+static void LoadRecordMixLightsAssets(void)
+{
+    if (!sPicTable_RecordMixLights[0].data)
+    {
+        size_t size;
+        const u8 *gfx = AssetsLoad4bpp("graphics/field_effects/pics/record_mix_lights.png", NULL, &size);
+        if (gfx)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                sPicTable_RecordMixLights[i].data = gfx + i * 128;
+                sPicTable_RecordMixLights[i].size = 128;
+            }
+        }
+    }
+    if (!sSpritePalette_RecordMixLights.data)
+        sSpritePalette_RecordMixLights.data = AssetsLoadPal("graphics/field_effects/palettes/record_mix_lights.pal", NULL);
+}
+#else
 static const u8 sSecretPowerCave_Gfx[] = INCBIN_U8("graphics/field_effects/pics/secret_power_cave.4bpp");
 static const u8 sFiller[32] = {0};
 static const u16 sSecretPowerCave_Pal[] = INCBIN_U16("graphics/field_effects/palettes/secret_power_cave.gbapal");
 static const u8 sSecretPowerShrub_Gfx[] = INCBIN_U8("graphics/field_effects/pics/secret_power_shrub.4bpp");
 static const u8 sSecretPowerTree_Gfx[] = INCBIN_U8("graphics/field_effects/pics/secret_power_tree.4bpp");
 static const u16 sSecretPowerPlant_Pal[] = INCBIN_U16("graphics/field_effects/palettes/secret_power_plant.gbapal");
-
 // TODO: These should also be combined into a single image, not matching for some reason
 static const u8 sSandPillar0_Gfx[] = INCBIN_U8("graphics/field_effects/pics/sand_pillar/0.4bpp");
 static const u8 sSandPillar1_Gfx[] = INCBIN_U8("graphics/field_effects/pics/sand_pillar/1.4bpp");
 static const u8 sSandPillar2_Gfx[] = INCBIN_U8("graphics/field_effects/pics/sand_pillar/2.4bpp");
+static const u8 sRecordMixLights_Gfx[] = INCBIN_U8("graphics/field_effects/pics/record_mix_lights.4bpp");
+static const u16 sRecordMixLights_Pal[] = INCBIN_U16("graphics/field_effects/palettes/record_mix_lights.gbapal");
+#endif
 
 static const struct OamData sOam_SecretPower =
 {
@@ -163,6 +254,7 @@ static const union AnimCmd *const sAnimTable_SecretPowerShrub[] =
     sAnim_SecretPowerShrub,
 };
 
+#ifndef PLATFORM_PC
 static const struct SpriteFrameImage sPicTable_SecretPowerCave[] =
 {
     overworld_frame(sSecretPowerCave_Gfx, 2, 2, 0),
@@ -190,6 +282,7 @@ static const struct SpriteFrameImage sPicTable_SecretPowerShrub[] =
     overworld_frame(sSecretPowerShrub_Gfx, 2, 2, 3),
     overworld_frame(sSecretPowerShrub_Gfx, 2, 2, 4),
 };
+#endif
 
 static const struct SpriteTemplate sSpriteTemplate_SecretPowerCave =
 {
@@ -224,8 +317,10 @@ static const struct SpriteTemplate sSpriteTemplate_SecretPowerShrub =
     .callback = SpriteCB_ShrubEntranceInit,
 };
 
+#ifndef PLATFORM_PC
 const struct SpritePalette gSpritePalette_SecretPower_Cave = {sSecretPowerCave_Pal, FLDEFF_PAL_TAG_SECRET_POWER_TREE};
 const struct SpritePalette gSpritePalette_SecretPower_Plant = {sSecretPowerPlant_Pal, FLDEFF_PAL_TAG_SECRET_POWER_PLANT};
+#endif
 
 static const struct OamData sOam_SandPillar =
 {
@@ -252,12 +347,26 @@ static const union AnimCmd *const sAnimTable_SandPillar[] =
     sAnim_SandPillar,
 };
 
+#ifndef PLATFORM_PC
 static const struct SpriteFrameImage sPicTable_SandPillar[] =
 {
     {sSandPillar0_Gfx, sizeof(sSandPillar0_Gfx)},
     {sSandPillar1_Gfx, sizeof(sSandPillar1_Gfx)},
     {sSandPillar2_Gfx, sizeof(sSandPillar2_Gfx)},
 };
+
+static const u8 sRecordMixLights_Gfx[] = INCBIN_U8("graphics/field_effects/pics/record_mix_lights.4bpp");
+static const u16 sRecordMixLights_Pal[] = INCBIN_U16("graphics/field_effects/palettes/record_mix_lights.gbapal");
+
+static const struct SpriteFrameImage sPicTable_RecordMixLights[] =
+{
+    overworld_frame(sRecordMixLights_Gfx, 4, 1, 0),
+    overworld_frame(sRecordMixLights_Gfx, 4, 1, 1),
+    overworld_frame(sRecordMixLights_Gfx, 4, 1, 2),
+};
+
+static const struct SpritePalette sSpritePalette_RecordMixLights = {sRecordMixLights_Pal, 0x1000};
+#endif // PLATFORM_PC
 
 static const struct SpriteTemplate sSpriteTemplate_SandPillar =
 {
@@ -271,18 +380,6 @@ static const struct SpriteTemplate sSpriteTemplate_SandPillar =
 };
 
 const struct SpritePalette gSpritePalette_SandPillar = {gTilesetPalettes_SecretBase[5], FLDEFF_PAL_TAG_SAND_PILLAR};
-
-static const u8 sRecordMixLights_Gfx[] = INCBIN_U8("graphics/field_effects/pics/record_mix_lights.4bpp");
-static const u16 sRecordMixLights_Pal[] = INCBIN_U16("graphics/field_effects/palettes/record_mix_lights.gbapal");
-
-static const struct SpriteFrameImage sPicTable_RecordMixLights[] =
-{
-    overworld_frame(sRecordMixLights_Gfx, 4, 1, 0),
-    overworld_frame(sRecordMixLights_Gfx, 4, 1, 1),
-    overworld_frame(sRecordMixLights_Gfx, 4, 1, 2),
-};
-
-static const struct SpritePalette sSpritePalette_RecordMixLights = {sRecordMixLights_Pal, 0x1000};
 
 static const union AnimCmd sAnim_RecordMixLights[] =
 {
@@ -602,6 +699,9 @@ bool8 FldEff_UseSecretPowerCave(void)
 static void StartSecretBaseCaveFieldEffect(void)
 {
     FieldEffectActiveListRemove(FLDEFF_USE_SECRET_POWER_CAVE);
+#ifdef PLATFORM_PC
+    LoadSecretPowerAssets();
+#endif
     FieldEffectStart(FLDEFF_SECRET_POWER_CAVE);
 }
 
@@ -662,6 +762,9 @@ bool8 FldEff_UseSecretPowerTree(void)
 static void StartSecretBaseTreeFieldEffect(void)
 {
     FieldEffectActiveListRemove(FLDEFF_USE_SECRET_POWER_TREE);
+#ifdef PLATFORM_PC
+    LoadSecretPowerAssets();
+#endif
     FieldEffectStart(FLDEFF_SECRET_POWER_TREE);
 }
 
@@ -736,6 +839,9 @@ bool8 FldEff_UseSecretPowerShrub(void)
 static void StartSecretBaseShrubFieldEffect(void)
 {
     FieldEffectActiveListRemove(FLDEFF_USE_SECRET_POWER_SHRUB);
+#ifdef PLATFORM_PC
+    LoadSecretPowerAssets();
+#endif
     FieldEffectStart(FLDEFF_SECRET_POWER_SHRUB);
 }
 
@@ -1035,6 +1141,9 @@ bool8 FldEff_SandPillar(void)
     s16 x, y;
 
     LockPlayerFieldControls();
+#ifdef PLATFORM_PC
+    LoadSandPillarAssets();
+#endif
     GetXYCoordsOneStepInFrontOfPlayer(&x, &y);
 
     gFieldEffectArguments[5] = x;
@@ -1292,6 +1401,9 @@ u8 CreateRecordMixingLights(void)
 {
     u8 spriteId;
 
+#ifdef PLATFORM_PC
+    LoadRecordMixLightsAssets();
+#endif
     LoadSpritePalette(&sSpritePalette_RecordMixLights);
 
     spriteId = CreateSprite(&sSpriteTemplate_RecordMixLights, 0, 0, 82);
