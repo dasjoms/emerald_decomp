@@ -7,6 +7,9 @@
 #include "trig.h"
 #include "minigame_countdown.h"
 #include "constants/songs.h"
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
 
 /*
     This file contains two types of '3-2-1 Start' countdowns intended for use by the wireless minigames.
@@ -48,6 +51,31 @@ static void Task_StaticCountdown_Free(u8 taskId);
 static void Task_StaticCountdown_Start(u8 taskId);
 static void Task_StaticCountdown_Run(u8 taskId);
 
+#ifdef PLATFORM_PC
+static struct SpriteSheet sSpriteSheet_321Start_Static[] =
+{
+    { NULL, 0xC00, TAG_STATIC_COUNTDOWN },
+    {},
+};
+
+static struct SpritePalette sSpritePalette_321Start_Static[] =
+{
+    { NULL, TAG_STATIC_COUNTDOWN },
+    {},
+};
+
+static void LoadStaticCountdownAssets(void)
+{
+    if (!sSpriteSheet_321Start_Static[0].data)
+    {
+        size_t size = 0;
+        sSpriteSheet_321Start_Static[0].data = AssetsLoad4bpp("graphics/link/321start_static.png", NULL, &size);
+        sSpriteSheet_321Start_Static[0].size = (u16)size;
+    }
+    if (!sSpritePalette_321Start_Static[0].data)
+        sSpritePalette_321Start_Static[0].data = AssetsGetPNGPalette("graphics/link/321start_static.png", NULL);
+}
+#else
 static const u16 s321Start_Static_Pal[] = INCBIN_U16("graphics/link/321start_static.gbapal");
 static const u32 s321Start_Static_Gfx[] = INCBIN_U32("graphics/link/321start_static.4bpp.lz");
 
@@ -62,6 +90,7 @@ static const struct SpritePalette sSpritePalette_321Start_Static[] =
     {s321Start_Static_Pal, TAG_STATIC_COUNTDOWN},
     {},
 };
+#endif
 
 static const union AnimCmd sAnim_StaticCountdown_Three[] =
 {
@@ -210,8 +239,14 @@ static void StaticCountdown_CreateSprites(u8 taskId, s16 *data)
     u8 i;
     struct Sprite *sprite;
 
+#ifdef PLATFORM_PC
+    LoadStaticCountdownAssets();
+    LoadSpriteSheet(&sSpriteSheet_321Start_Static[tSpriteSheetId]);
+    LoadSpritePalette(&sSpritePalette_321Start_Static[tSpritePalId]);
+#else
     LoadCompressedSpriteSheet(&sSpriteSheet_321Start_Static[tSpriteSheetId]);
     LoadSpritePalette(&sSpritePalette_321Start_Static[tSpritePalId]);
+#endif
     for (i = 0; i < tNumSprites; i++)
         tSpriteIds(i) = CreateSprite(&sSpriteTemplate_StaticCountdown[tSpriteTemplateId], tX, tY, tSubpriority);
     for (i = 0; i < tNumSprites; i++)
@@ -373,8 +408,10 @@ static void CreateStartSprite(u16 tileTag, u16 palTag, s16 x, s16 y, u8 subprior
 static void InitStartGraphic(u8 spriteId1, u8 spriteId2, u8 spriteId3);
 static void SpriteCB_Start(struct Sprite *sprite);
 
+#ifndef PLATFORM_PC
 static const u16 s321Start_Pal[] = INCBIN_U16("graphics/link/321start.gbapal");
 static const u32 s321Start_Gfx[] = INCBIN_U32("graphics/link/321start.4bpp.lz");
+#endif
 
 #define tState       data[0]
 #define tTilesTag    data[2]
@@ -600,6 +637,21 @@ static void SpriteCB_Start(struct Sprite *sprite)
 #undef sYSpeed
 #undef sY
 
+#ifdef PLATFORM_PC
+static void Load321StartGfx(u16 tileTag, u16 palTag)
+{
+    struct SpriteSheet spriteSheet = { NULL, 0, tileTag };
+    struct SpritePalette spritePalette = { NULL, palTag };
+    size_t size = 0;
+
+    spriteSheet.data = AssetsLoad4bpp("graphics/link/321start.png", NULL, &size);
+    spriteSheet.size = (u16)size;
+    spritePalette.data = AssetsGetPNGPalette("graphics/link/321start.png", NULL);
+
+    LoadSpriteSheet(&spriteSheet);
+    LoadSpritePalette(&spritePalette);
+}
+#else
 static void Load321StartGfx(u16 tileTag, u16 palTag)
 {
     struct CompressedSpriteSheet spriteSheet = {s321Start_Gfx, 0xE00, 0};
@@ -611,6 +663,7 @@ static void Load321StartGfx(u16 tileTag, u16 palTag)
     LoadCompressedSpriteSheet(&spriteSheet);
     LoadSpritePalette(&spritePalette);
 }
+#endif
 
 static const struct OamData sOamData_Numbers =
 {

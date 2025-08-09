@@ -30,3 +30,4 @@
 - Converted list menu interface assets (scroll arrows and red cursors) to runtime-loaded PNG graphics and palettes, eliminating their INCBIN data and leveraging the shared red UI palette.
 - Implemented file-based flash save emulation for PC builds, adding platform/pc/flash.c to map GBA flash sectors to a saves/slot0.sav file and updating the PC Makefile.
 - Converted Pokémon summary screen assets to runtime loading for PC builds, loading the status tilemap, A/B button graphics, and markings palette from external files to eliminate remaining INCBIN data.
+- Migrated wireless minigame countdown graphics to load PNG sprites and palettes at runtime for PC builds, removing INCBIN dependencies.
