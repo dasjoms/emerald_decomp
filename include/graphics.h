@@ -3217,6 +3217,7 @@ extern const u32 gBattleVSFrame_Tilemap[];
 extern const u32 gMultiBattleIntroBg_Opponent_Tilemap[];
 extern const u32 gMultiBattleIntroBg_Player_Tilemap[];
 
+#ifndef PLATFORM_PC
 // battle environments
 extern const u32 gBattleEnvironmentTiles_TallGrass[];
 extern const u32 gBattleEnvironmentTilemap_TallGrass[];
@@ -3283,6 +3284,7 @@ extern const u32 gBattleEnvironmentPalette_StadiumPhoebe[];
 extern const u32 gBattleEnvironmentPalette_StadiumGlacia[];
 extern const u32 gBattleEnvironmentPalette_StadiumDrake[];
 extern const u32 gBattleEnvironmentPalette_StadiumWallace[];
+#endif // PLATFORM_PC
 
 // Pokédex
 extern const u32 gPokedexInterface_Gfx[];

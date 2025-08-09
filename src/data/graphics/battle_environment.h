@@ -1,3 +1,4 @@
+#ifndef PLATFORM_PC
 const u32 gBattleEnvironmentTiles_TallGrass[] = INCBIN_U32("graphics/battle_environment/tall_grass/tiles.4bpp.lz");
 const u32 gBattleEnvironmentPalette_TallGrass[] = INCBIN_U32("graphics/battle_environment/tall_grass/palette.gbapal.lz");
 const u32 gBattleEnvironmentTilemap_TallGrass[] = INCBIN_U32("graphics/battle_environment/tall_grass/map.bin.lz");
@@ -86,3 +87,4 @@ const u32 gBattleEnvironmentAnimTilemap_Building[] = INCBIN_U32("graphics/battle
 
 const u32 gBattleEnvironmentAnimTiles_Rayquaza[] = INCBIN_U32("graphics/battle_environment/sky/anim_tiles.4bpp.lz");
 const u32 gBattleEnvironmentAnimTilemap_Rayquaza[] = INCBIN_U32("graphics/battle_environment/sky/anim_map.bin.lz");
+#endif // PLATFORM_PC
