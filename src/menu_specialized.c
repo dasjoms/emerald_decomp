@@ -26,6 +26,10 @@
 #include "constants/songs.h"
 #include "gba/io_reg.h"
 
+#ifdef PLATFORM_PC
+#include "../platform/pc/assets.h"
+#endif
+
 extern const struct CompressedSpriteSheet gMonFrontPicTable[];
 
 EWRAM_DATA static u8 sMailboxWindowIds[MAILBOXWIN_COUNT] = {0};
@@ -1113,11 +1117,60 @@ bool8 ConditionMenu_UpdateMonExit(struct ConditionGraph *graph, s16 *x)
 
     return (graphUpdating || monUpdating);
 }
+#ifdef PLATFORM_PC
+static const u8 *LoadConditionPokeballGfx(void)
+{
+    static const u8 *sGfx;
+    if (!sGfx)
+        sGfx = AssetsLoad4bpp("graphics/pokenav/condition/pokeball.png", "graphics/pokenav/condition/cancel.pal", NULL);
+    return sGfx;
+}
 
+static const u8 *LoadConditionPokeballPlaceholderGfx(void)
+{
+    static const u8 *sGfx;
+    if (!sGfx)
+        sGfx = AssetsLoad4bpp("graphics/pokenav/condition/pokeball_placeholder.png", "graphics/pokenav/condition/cancel.pal", NULL);
+    return sGfx;
+}
+
+static const u8 *LoadConditionCancelGfx(void)
+{
+    static const u8 *sGfx;
+    if (!sGfx)
+        sGfx = AssetsLoad4bpp("graphics/pokenav/condition/cancel.png", "graphics/pokenav/condition/cancel.pal", NULL);
+    return sGfx;
+}
+
+static const u16 *LoadConditionCancelPal(void)
+{
+    static const u16 *sPal;
+    if (!sPal)
+        sPal = AssetsLoadPal("graphics/pokenav/condition/cancel.pal", NULL);
+    return sPal;
+}
+
+static const u8 *LoadConditionSparkleGfx(void)
+{
+    static const u8 *sGfx;
+    if (!sGfx)
+        sGfx = AssetsLoad4bpp("graphics/pokenav/condition/sparkle.png", NULL, NULL);
+    return sGfx;
+}
+
+static const u16 *LoadConditionSparklePal(void)
+{
+    static const u16 *sPal;
+    if (!sPal)
+        sPal = AssetsGetPNGPalette("graphics/pokenav/condition/sparkle.png", NULL);
+    return sPal;
+}
+#else
 static const u32 sConditionPokeball_Gfx[] = INCBIN_U32("graphics/pokenav/condition/pokeball.4bpp");
 static const u32 sConditionPokeballPlaceholder_Gfx[] = INCBIN_U32("graphics/pokenav/condition/pokeball_placeholder.4bpp");
 static const u16 sConditionSparkle_Gfx[] = INCBIN_U16("graphics/pokenav/condition/sparkle.gbapal");
 static const u32 sConditionSparkle_Pal[] = INCBIN_U32("graphics/pokenav/condition/sparkle.4bpp");
+#endif
 
 static const struct OamData sOam_ConditionMonPic =
 {
@@ -1197,7 +1250,20 @@ void LoadConditionMonPicTemplate(struct SpriteSheet *sheet, struct SpriteTemplat
 void LoadConditionSelectionIcons(struct SpriteSheet *sheets, struct SpriteTemplate *template, struct SpritePalette *pals)
 {
     u8 i;
+#ifdef PLATFORM_PC
+    struct SpriteSheet dataSheets[4];
+    struct SpritePalette dataPals[3];
 
+    dataSheets[0] = (struct SpriteSheet){LoadConditionPokeballGfx(), 0x100, TAG_CONDITION_BALL};
+    dataSheets[1] = (struct SpriteSheet){LoadConditionPokeballPlaceholderGfx(), 0x20, TAG_CONDITION_BALL_PLACEHOLDER};
+    dataSheets[2] = (struct SpriteSheet){LoadConditionCancelGfx(), 0x100, TAG_CONDITION_CANCEL};
+    dataSheets[3] = (struct SpriteSheet){NULL, 0, 0};
+
+    const u16 *pal = LoadConditionCancelPal();
+    dataPals[0] = (struct SpritePalette){pal, TAG_CONDITION_BALL};
+    dataPals[1] = (struct SpritePalette){pal + 16, TAG_CONDITION_CANCEL};
+    dataPals[2] = (struct SpritePalette){NULL, 0};
+#else
     struct SpriteSheet dataSheets[] =
     {
         {sConditionPokeball_Gfx, 0x100, TAG_CONDITION_BALL},
@@ -1212,6 +1278,7 @@ void LoadConditionSelectionIcons(struct SpriteSheet *sheets, struct SpriteTempla
         {gPokenavConditionCancel_Pal + 16, TAG_CONDITION_CANCEL},
         {},
     };
+#endif
 
     // Tag is overwritten for the other selection icons
     struct SpriteTemplate dataTemplate =
@@ -1243,8 +1310,13 @@ void LoadConditionSelectionIcons(struct SpriteSheet *sheets, struct SpriteTempla
 
 void LoadConditionSparkle(struct SpriteSheet *sheet, struct SpritePalette *pal)
 {
+#ifdef PLATFORM_PC
+    struct SpriteSheet dataSheet = {LoadConditionSparkleGfx(), 0x380, TAG_CONDITION_SPARKLE};
+    struct SpritePalette dataPal = {LoadConditionSparklePal(), TAG_CONDITION_SPARKLE};
+#else
     struct SpriteSheet dataSheet = {sConditionSparkle_Pal, 0x380, TAG_CONDITION_SPARKLE};
     struct SpritePalette dataPal = {sConditionSparkle_Gfx, TAG_CONDITION_SPARKLE};
+#endif
 
     *sheet = dataSheet;
     *pal = dataPal;
